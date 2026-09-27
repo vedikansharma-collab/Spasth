@@ -1,0 +1,62 @@
+[
+  {
+    "code": "PROC-APP-LAP",
+    "name": "Laparoscopic Appendectomy",
+    "category": "General Surgery",
+    "description": "Minimally invasive surgical procedure to remove the inflamed appendix through small abdominal incisions."
+  },
+  {
+    "code": "PROC-CATARACT",
+    "name": "Cataract Surgery (Phacoemulsification with Foldable IOL)",
+    "category": "Ophthalmology",
+    "description": "Modern cataract extraction using ultrasonic phacoemulsification with foldable intraocular lens implantation."
+  },
+  {
+    "code": "PROC-KNEE-REP",
+    "name": "Total Knee Replacement (Unilateral)",
+    "category": "Orthopedics",
+    "description": "Complete replacement of the damaged knee joint surfaces with biocompatible prosthetic components."
+  },
+  {
+    "code": "PROC-HIP-REP",
+    "name": "Total Hip Replacement",
+    "category": "Orthopedics",
+    "description": "Reconstruction of the hip joint replacing femoral head and acetabular socket with artificial implants."
+  },
+  {
+    "code": "PROC-ANGIOPLASTY",
+    "name": "Coronary Angioplasty (PTCA with Drug Eluting Stent)",
+    "category": "Cardiology",
+    "description": "Percutaneous coronary intervention to widen blocked coronary arteries with drug-eluting stent deployment."
+  },
+  {
+    "code": "PROC-GALLBLADDER",
+    "name": "Laparoscopic Cholecystectomy (Gallbladder Removal)",
+    "category": "General Surgery",
+    "description": "Keyhole removal of the gallbladder for cholelithiasis (gallstones) or chronic cholecystitis."
+  },
+  {
+    "code": "PROC-HERNIA",
+    "name": "Inguinal Hernia Repair (Laparoscopic Mesh Plasty)",
+    "category": "General Surgery",
+    "description": "Tension-free laparoscopic mesh placement to reinforce weakened abdominal wall in the groin."
+  },
+  {
+    "code": "PROC-CSECTION",
+    "name": "Caesarean Section Delivery (LSCS)",
+    "category": "Obstetrics & Gynecology",
+    "description": "Lower segment caesarean section surgical birth including neonatal initial observation and obstetric care."
+  },
+  {
+    "code": "PROC-KIDNEY-STONE",
+    "name": "Kidney Stone Procedure (PCNL / RIRS Laser Lithotripsy)",
+    "category": "Urology",
+    "description": "Endoscopic laser breakdown and clearance of renal and ureteric calculi."
+  },
+  {
+    "code": "PROC-TONSILLECTOMY",
+    "name": "Coblation Tonsillectomy",
+    "category": "ENT",
+    "description": "Controlled ablation removal of palatine tonsils for recurrent tonsillitis or sleep-disordered breathing."
+  }
+]

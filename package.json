@@ -1,0 +1,31 @@
+{
+  "name": "policy-cost-estimator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Policy-Linked Treatment Cost Estimation System",
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter @policy-estimator/api dev\" \"pnpm --filter @policy-estimator/web dev\"",
+    "dev:api": "pnpm --filter @policy-estimator/api dev",
+    "dev:web": "pnpm --filter @policy-estimator/web dev",
+    "build": "pnpm --filter @policy-estimator/types build && pnpm --filter @policy-estimator/schemas build && pnpm --filter @policy-estimator/calculation-engine build && pnpm --filter @policy-estimator/api build && pnpm --filter @policy-estimator/web build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:studio": "prisma studio",
+    "db:setup": "prisma generate && prisma db push && tsx prisma/seed.ts",
+    "clean": "rimraf dist node_modules apps/*/node_modules apps/*/.next apps/*/dist packages/*/node_modules packages/*/dist"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "concurrently": "^9.1.0",
+    "prisma": "^5.22.0",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}
