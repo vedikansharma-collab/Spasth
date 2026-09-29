@@ -26,41 +26,87 @@ Insurance policies are notoriously opaque, filled with legal jargon, hidden room
 
 ## 📐 System Architecture
 
-The following diagram illustrates the end-to-end data flow between the user interface, backend microservice, AI RAG retriever, deterministic calculation engine, and SQLite database:
+The end-to-end processing pipeline is divided into 5 modular, decoupled stages—ranging from initial PDF ingestion and layout-aware LLM parsing to deterministic out-of-pocket estimation and interactive PDF.js citation rendering:
 
 ```mermaid
-graph TD
-    subgraph Frontend Layer ["Frontend (React 18 + Vite + Vanilla CSS)"]
-        Hero["Hero: Policy Language to Treatment Cost"]
-        Upload["Drag & Drop PDF Uploader"]
-        RulesCard["Extracted Policy Rules Cards"]
-        Form["Treatment Scenario Builder"]
-        Result["Financial Breakdown Dashboard"]
-        Modal["Interactive Evidence Citation Modal"]
+flowchart LR
+    subgraph Stage1 ["1. Patient Inputs & API"]
+        PDF["📄 Uploaded Policy PDF"]
+        UploadAPI["☁️ Upload API<br/><i>Synchronous processing for hackathon prototype<br/>(Queue in production)</i>"]
+        Scenario["📝 Treatment Scenario<br/><i>Procedure, city, room category,<br/>pre-existing conditions</i>"]
+        Status["📡 Parsing Status<br/><i>Parsing → Extracting → Ready<br/>Unlock scenario when complete</i>"]
     end
 
-    subgraph API Gateway ["FastAPI Gateway Microservice"]
-        Endpoints["REST Endpoints: /upload, /estimate, /treatments, /health"]
+    subgraph Stage2 ["2. PDF Parsing & LLM Context"]
+        Parser["📷 Layout-Aware Parser: LlamaParse<br/><i>Structured Markdown + table blocks;<br/>page and rule bounding boxes</i>"]
+        LLMInject["📜 Mass Context LLM Injection<br/><i>Pass full structured Markdown directly<br/>to the LLM context window</i>"]
     end
 
-    subgraph Intelligence & Storage ["PyMuPDF + Gemini AI RAG + SQLite Storage"]
-        PDFExt["PyMuPDF Page Extractor"]
-        RAG["Gemini RAG Policy Retriever"]
-        CalcEngine["Deterministic Python Calculation Engine"]
-        DB[("SQLite Database (Policies, Rules, Benchmark Costs)")]
+    subgraph Stage3 ["3. Clinical & Policy Evidence"]
+        DictMap["🩺 Static Dictionary Mapping<br/><i>Regex / dictionary matching to mock DB<br/>→ standardized procedure code</i>"]
+        CostMatch["📊 Mock-Data Cost Matching<br/><i>procedure_code + city_tier + room_category;<br/>no raw-text matching</i>"]
+        BaselineDB[("🛢️ India Procedure-Cost Baseline<br/><i>Lightweight JSON/MySQL mock data<br/>(15-20 procedures)</i>")]
+        GovClauses["📑 Governing Clauses from Full Context<br/><i>Caps, co-pay, waiting periods;<br/>Exact section, page and coordinates</i>"]
+        LLMExtract["🤖 LLM: Extraction Only<br/><i>Extract raw rules and exact citations;<br/>never calculate payable amounts</i>"]
+        Schema["✅ Validated Policy-Rule Schema<br/><i>Pydantic / JSON Schema: caps, co-pay,<br/>waiting periods + citation boxes</i>"]
     end
 
-    Upload -->|POST /upload| Endpoints
-    Endpoints --> PDFExt
-    PDFExt -->|Preserved Page Chunks| DB
-    DB --> RAG
-    RAG --> RulesCard
-    Form -->|POST /estimate| Endpoints
-    Endpoints --> CalcEngine
-    DB -->|Benchmark Costs & Rule Sets| CalcEngine
-    CalcEngine --> Result
-    Result -->|Click Citation| Modal
+    subgraph Stage4 ["4. Deterministic Estimate"]
+        MathCore["🧮 Deterministic Math Core<br/><i>Pure code: validated rules + cost range<br/>Split bill into Proportionate vs. Fixed expenses<br/>before applying room factor</i>"]
+        Confidence["🛡️ Confidence Assessment<br/><i>Clause clarity + cost-match quality;<br/>flag ambiguity and missing inputs</i>"]
+        StateCache["{} In-Memory State Cache<br/><i>Store validated policy schema in memory</i>"]
+        Reevaluate["🔄 POST /api/v1/reevaluate<br/><i>Read cached schema → run Math Core<br/>Return range, confidence, citations;<br/>no PDF or LLM rerun</i>"]
+    end
+
+    subgraph Stage5 ["5. Patient-Facing Result"]
+        OutofPocket["₹ Estimated Out-of-Pocket Range<br/><i>Patient payable amount + breakdown</i>"]
+        Citations["📑 Clickable Citation Trail<br/><i>Each claim → clause, page and<br/>[x_min, y_min, x_max, y_max]</i>"]
+        ConfLevel["❓ High / Medium / Low Confidence<br/><i>Show unknowns instead of guessing</i>"]
+        Sensitivity["🎛️ Live Scenario Sensitivity<br/><i>Change city, room or condition;<br/>refresh range, confidence and citations</i>"]
+        Normalizer["🔍 Coordinate Normalizer<br/><i>Scales raw bounding box (x,y) coordinates<br/>to match dynamic PDF.js canvas resolution</i>"]
+        PDFViewer["🖼️ Split-Screen PDF.js Viewer<br/><i>Citation click deep-links to exact page<br/>& highlights rule's bounding box over PDF</i>"]
+    end
+
+    PDF --> UploadAPI
+    UploadAPI --> Parser
+    UploadAPI -.->|status| Status
+    Status -.->|status| Parser
+    Parser --> LLMInject
+    LLMInject --> GovClauses
+    
+    Scenario --> DictMap
+    DictMap --> CostMatch
+    BaselineDB <--> CostMatch
+
+    GovClauses --> LLMExtract
+    LLMExtract --> Schema
+
+    CostMatch --> MathCore
+    Schema --> MathCore
+    Schema --> Confidence
+    Schema --> StateCache
+
+    StateCache --> Reevaluate
+    Reevaluate --> Sensitivity
+    Sensitivity -.->|slider changes| Reevaluate
+
+    MathCore --> OutofPocket
+    MathCore --> Citations
+    Confidence --> ConfLevel
+
+    Citations -->|click → page + highlight| Normalizer
+    Normalizer --> PDFViewer
 ```
+
+### Architectural Pipeline Breakdown
+
+| Pipeline Stage | Responsibilities & Data Flow |
+| :--- | :--- |
+| **1. Patient Inputs & API** | Accepts uploaded policy PDF and scenario inputs (procedure, city, room category). Manages asynchronous parsing status states. |
+| **2. PDF Parsing & LLM Context** | Executes layout-aware PDF extraction (LlamaParse / PyMuPDF) to preserve bounding boxes and table blocks, injecting full structured Markdown into LLM context. |
+| **3. Clinical & Policy Evidence** | Performs static dictionary mapping to standardize procedure codes, retrieves benchmark procedure costs, extracts governing policy clauses, and outputs a validated Pydantic JSON schema. |
+| **4. Deterministic Estimate** | Evaluates financial liability strictly using pure Python code (`Deterministic Math Core`), computes confidence assessment scores, and caches policy schemas in memory for zero-latency scenario re-evaluation. |
+| **5. Patient-Facing Result** | Renders out-of-pocket range breakdown, interactive citation trails, confidence badges, live scenario sensitivity controls, and a split-screen PDF.js viewer with bounding box highlights. |
 
 ---
 
