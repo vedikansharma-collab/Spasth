@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-cyan-bright: #73FFFF;
+    --color-red-danger: #D51B1D;
+    --color-teal-dark: #003339;
+    --color-bg-light: #F7F7F8;
+    --color-teal-medium: #39ABAD;
+    --color-teal-deep: #006668;
+
+    --bg-main: #ffffff;
+    --bg-secondary: #F7F7F8;
+    --text-primary: #003339;
+    --text-secondary: #4A5859;
+    --border-color: #E2E8E8;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, .font-heading {
+    font-family: 'Inter', -apple-system, sans-serif;
+    letter-spacing: -0.02em;
+    color: #003339;
+  }
+}
+
+/* Color Palette Utility Classes: #73FFFF, #D51B1D, #003339, #F7F7F8, #39ABAD, #006668 */
+.bg-offwhite {
+  background-color: #F7F7F8;
+}
+
+.text-teal-dark {
+  color: #003339;
+}
+
+.text-teal-deep {
+  color: #006668;
+}
+
+.text-teal-medium {
+  color: #39ABAD;
+}
+
+.text-cyan-bright {
+  color: #73FFFF;
+}
+
+.text-red-danger {
+  color: #D51B1D;
+}
+
+.bg-teal-dark {
+  background-color: #003339;
+}
+
+.bg-teal-deep {
+  background-color: #006668;
+}
+
+.bg-teal-medium {
+  background-color: #39ABAD;
+}
+
+.bg-teal-light {
+  background-color: rgba(57, 171, 173, 0.12);
+}
+
+.bg-red-light {
+  background-color: rgba(213, 27, 29, 0.08);
+}
+
+.border-teal-deep {
+  border-color: #006668;
+}
+
+.border-teal-medium {
+  border-color: #39ABAD;
+}
+
+.border-red-danger {
+  border-color: #D51B1D;
+}
+
+.card-white {
+  background-color: #ffffff;
+  border: 1px solid #E2E8E8;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px -2px rgba(0, 51, 57, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+.card-white:hover {
+  border-color: #39ABAD;
+  box-shadow: 0 8px 24px -4px rgba(0, 51, 57, 0.09);
+}
+
+.card-accent {
+  background-color: rgba(57, 171, 173, 0.1);
+  border: 1px solid #39ABAD;
+  border-radius: 1rem;
+}
+
+.btn-primary {
+  background-color: #006668;
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #003339;
+  box-shadow: 0 4px 14px rgba(0, 102, 104, 0.3);
+}
+
+.btn-secondary {
+  background-color: #ffffff;
+  color: #003339;
+  border: 1px solid #39ABAD;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(57, 171, 173, 0.08);
+  border-color: #006668;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F7F7F8;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #39ABAD;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #006668;
+}
