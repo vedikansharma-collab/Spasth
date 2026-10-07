@@ -71,7 +71,7 @@ def test_room_rent_proportionate_deduction():
     # Deluxe room upgrade scenario triggers 30% proportionate deduction penalty
     rules = [
         {"rule_type": "copay", "value": 10.0, "page": 2, "clause": "2.1", "source_text": "10% Copay"},
-        {"rule_type": "room_rent_limit", "value": 5000.0, "page": 1, "clause": "1.2", "source_text": "Room cap INR 5,000"}
+        {"rule_type": "room_rent_limit", "value": 5000.0, "page": 1, "clause": "1.2", "source_text": "Room cap INR 5,000. 30% proportionate deduction penalty applies for room category upgrades."}
     ]
 
     result = FinancialCalculationEngine.calculate_out_of_pocket(

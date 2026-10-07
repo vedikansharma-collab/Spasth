@@ -124,6 +124,25 @@ class PolicyService:
             """, (policy_id,))
             pages = cursor.fetchall()
             policy["pages"] = pages
+
+            # Fetch or extract and cache policy rules
+            cursor.execute("SELECT * FROM policy_rules WHERE policy_id = ?;", (policy_id,))
+            rules = cursor.fetchall()
+            if not rules and pages:
+                from app.extraction.intelligence import PolicyIntelligenceExtractor
+                extracted_rules = PolicyIntelligenceExtractor.extract_structured_rules(pages)
+                for r in extracted_rules:
+                    cursor.execute("""
+                        INSERT INTO policy_rules (
+                            policy_id, rule_type, rule_key, value, unit, page, clause, source_text, confidence
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    """, (
+                        policy_id, r["rule_type"], r.get("rule_key", r["rule_type"]),
+                        r.get("value"), r.get("unit"), r.get("page", 1),
+                        r.get("clause", "N/A"), r.get("source_text", ""), r.get("confidence", "HIGH")
+                    ))
+                rules = extracted_rules
+            policy["rules"] = rules
             return policy
 
     @staticmethod

@@ -52,4 +52,9 @@ export const calculateEstimate = async (payload) => {
   return response.data;
 };
 
+export const calculateTreatment = async (payload) => {
+  const response = await api.post('/calculate', payload);
+  return response.data;
+};
+
 export default api;

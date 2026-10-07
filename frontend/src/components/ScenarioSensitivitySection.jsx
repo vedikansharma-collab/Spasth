@@ -31,7 +31,7 @@ export default function ScenarioSensitivitySection({ currentEstimate, onToggleRo
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              Standard single room stays within policy daily room cap (₹5,000/day). No proportionate deduction penalty applied.
+              Standard single room stays within policy daily room cap ({currentEstimate?.room_rent_cap ? `₹${currentEstimate.room_rent_cap.toLocaleString('en-IN')}/day` : 'policy schedule limit'}). No proportionate deduction penalty applied.
             </p>
 
             <button
@@ -53,12 +53,16 @@ export default function ScenarioSensitivitySection({ currentEstimate, onToggleRo
                 <h3 className="font-bold text-slate-900 text-base">Scenario B: Deluxe Room Upgrade</h3>
               </div>
               <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                30% Proportionate Penalty
+                {currentEstimate?.room_proportionate_deduction_rate
+                  ? `${Math.round(currentEstimate.room_proportionate_deduction_rate * 100)}% Policy Deduction`
+                  : 'Policy Cap Review'}
               </span>
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              Upgrading to Deluxe Room exceeds daily cap, triggering a mandatory 30% proportionate deduction penalty across associated hospital charges.
+              {currentEstimate?.room_proportionate_deduction_rate
+                ? `Upgrading to Deluxe Room triggers a ${Math.round(currentEstimate.room_proportionate_deduction_rate * 100)}% proportionate deduction defined in policy terms.`
+                : `Upgrading to Deluxe Room may exceed standard daily limit (${currentEstimate?.room_rent_cap ? `₹${currentEstimate.room_rent_cap.toLocaleString('en-IN')}/day` : 'standard limit'}). Policy-defined terms apply without arbitrary universal penalties.`}
             </p>
 
             <button

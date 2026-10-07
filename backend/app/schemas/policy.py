@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 class PolicyPageSchema(BaseModel):
     page_number: int
@@ -33,6 +33,7 @@ class PolicyDetailResponse(BaseModel):
     extraction_status: str
     error_message: Optional[str] = None
     pages: List[PolicyPageSchema] = []
+    rules: List[Dict[str, Any]] = []
 
     class Config:
         from_attributes = True

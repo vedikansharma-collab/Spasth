@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DollarSign, ShieldCheck, AlertCircle, FileText, CheckCircle2, ChevronRight, Layers, Scale, Info, ExternalLink, ArrowRight } from 'lucide-react';
+import { DollarSign, ShieldCheck, AlertCircle, FileText, CheckCircle2, ChevronRight, Layers, Scale, Info, ExternalLink, ArrowRight, Ban, Clock } from 'lucide-react';
 import CitationModal from './CitationModal';
 
 export default function EstimationResultDashboard({ estimate, onRecalculate, loading }) {
@@ -10,6 +10,7 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
   if (!estimate) return null;
 
   const formatINR = (amount) => {
+    if (amount === undefined || amount === null || isNaN(amount)) return '₹0';
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
@@ -17,33 +18,162 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
     }).format(amount);
   };
 
-  // Handle UNABLE TO ESTIMATE state
-  if (estimate.status === 'UNABLE_TO_ESTIMATE') {
+  const handleOpenCitation = (cite) => {
+    setSelectedCitation(cite);
+    setIsModalOpen(true);
+  };
+
+  // 1. Handle EXCLUDED Status (Phase 6)
+  if (estimate.status === 'EXCLUDED') {
     return (
-      <div className="card-white p-6 border-[#D51B1D]/40 bg-[rgba(213,27,29,0.04)] text-[#003339] space-y-4">
+      <div id="results" className="space-y-6">
+        <CitationModal citation={selectedCitation} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+        <div className="card-white p-6 sm:p-7 border-[#D51B1D] bg-[rgba(213,27,29,0.04)] text-[#003339] space-y-5">
+          <div className="flex items-start space-x-3.5">
+            <div className="p-3 rounded-2xl bg-[rgba(213,27,29,0.12)] border border-[#D51B1D]/40 text-[#D51B1D] flex-shrink-0">
+              <Ban className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-[#D51B1D] text-white uppercase tracking-wider">
+                  Policy Exclusion
+                </span>
+                <span className="text-xs font-mono text-[#D51B1D] font-bold">Zero Insurance Coverage</span>
+              </div>
+              <h3 className="text-xl font-black text-[#003339]">Treatment Explicitly Excluded from Coverage</h3>
+              <p className="text-xs text-[#4A5859] leading-relaxed">
+                {estimate.confidence_reason || 'This medical procedure is explicitly excluded under policy contract clauses.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <div className="p-4 rounded-xl bg-white border border-[#E2E8E8] space-y-1">
+              <span className="text-[10px] uppercase font-bold text-[#4A5859]">Estimated Treatment Cost</span>
+              <p className="text-base font-black text-[#003339] font-mono">
+                {formatINR(estimate.treatment_cost?.min ?? estimate.treatment_cost_range?.min)} – {formatINR(estimate.treatment_cost?.max ?? estimate.treatment_cost_range?.max)}
+              </p>
+              <span className="text-[11px] text-[#4A5859]">Source benchmark ({estimate.data_type || 'synthetic'})</span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-[rgba(213,27,29,0.06)] border border-[#D51B1D]/30 space-y-1">
+              <span className="text-[10px] uppercase font-bold text-[#D51B1D]">Patient Direct Liability</span>
+              <p className="text-base font-black text-[#D51B1D] font-mono">
+                100% Out-of-Pocket
+              </p>
+              <span className="text-[11px] text-[#D51B1D]/90">No insurance reimbursement payable</span>
+            </div>
+          </div>
+
+          {estimate.citations && estimate.citations.length > 0 && (
+            <div className="pt-2">
+              <span className="text-xs font-bold text-[#003339] block mb-2">Exclusion Policy Citation:</span>
+              <div
+                onClick={() => handleOpenCitation(estimate.citations[0])}
+                className="p-3 rounded-xl bg-white border border-[#E2E8E8] hover:border-[#D51B1D] transition-all cursor-pointer flex items-center justify-between"
+              >
+                <div>
+                  <span className="text-xs font-bold text-[#003339]">{estimate.citations[0].rule}</span>
+                  <p className="text-[11px] text-[#4A5859] font-mono mt-0.5">"{estimate.citations[0].source_text}"</p>
+                </div>
+                <span className="text-[10px] font-bold text-[#D51B1D] bg-[rgba(213,27,29,0.08)] px-2.5 py-1 rounded border border-[#D51B1D]/20 shrink-0">
+                  Page {estimate.citations[0].page} · Clause {estimate.citations[0].clause}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Handle WAITING PERIOD Status (Phase 5)
+  if (estimate.status === 'WAITING_PERIOD') {
+    return (
+      <div id="results" className="space-y-6">
+        <CitationModal citation={selectedCitation} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+        <div className="card-white p-6 sm:p-7 border-amber-300 bg-amber-50/40 text-[#003339] space-y-5">
+          <div className="flex items-start space-x-3.5">
+            <div className="p-3 rounded-2xl bg-amber-100 border border-amber-300 text-amber-800 flex-shrink-0">
+              <Clock className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-amber-600 text-white uppercase tracking-wider">
+                  Waiting Period Active
+                </span>
+                <span className="text-xs font-mono text-amber-900 font-bold">Claim Ineligible at Present</span>
+              </div>
+              <h3 className="text-xl font-black text-[#003339]">Mandatory Waiting Period Has Not Elapsed</h3>
+              <p className="text-xs text-[#4A5859] leading-relaxed">
+                {estimate.confidence_reason || 'Policy requires continuous coverage before this condition or procedure becomes claimable.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <div className="p-4 rounded-xl bg-white border border-[#E2E8E8] space-y-1">
+              <span className="text-[10px] uppercase font-bold text-[#4A5859]">Estimated Treatment Cost</span>
+              <p className="text-base font-black text-[#003339] font-mono">
+                {formatINR(estimate.treatment_cost?.min ?? estimate.treatment_cost_range?.min)} – {formatINR(estimate.treatment_cost?.max ?? estimate.treatment_cost_range?.max)}
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-white border border-[#E2E8E8] space-y-1">
+              <span className="text-[10px] uppercase font-bold text-amber-800">Current Coverage Eligibility</span>
+              <p className="text-base font-black text-amber-800 font-mono">0% (In Waiting Period)</p>
+            </div>
+          </div>
+
+          {estimate.citations && estimate.citations.length > 0 && (
+            <div className="pt-2">
+              <span className="text-xs font-bold text-[#003339] block mb-2">Waiting Period Policy Evidence:</span>
+              <div
+                onClick={() => handleOpenCitation(estimate.citations[0])}
+                className="p-3 rounded-xl bg-white border border-[#E2E8E8] hover:border-amber-400 transition-all cursor-pointer flex items-center justify-between"
+              >
+                <div>
+                  <span className="text-xs font-bold text-[#003339]">{estimate.citations[0].rule}</span>
+                  <p className="text-[11px] text-[#4A5859] font-mono mt-0.5">"{estimate.citations[0].source_text}"</p>
+                </div>
+                <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded border border-amber-300 shrink-0">
+                  Page {estimate.citations[0].page} · Clause {estimate.citations[0].clause}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Handle UNABLE TO ESTIMATE / INSUFFICIENT INFORMATION (Phase 4 & 10)
+  if (estimate.status === 'UNABLE_TO_ESTIMATE' || estimate.status === 'INSUFFICIENT_INFORMATION') {
+    return (
+      <div id="results" className="card-white p-6 border-[#D51B1D]/40 bg-[rgba(213,27,29,0.04)] text-[#003339] space-y-4">
         <div className="flex items-start space-x-3">
-          <div className="p-2 rounded-xl bg-[rgba(213,27,29,0.1)] border border-[#D51B1D]/30 text-[#D51B1D] flex-shrink-0">
+          <div className="p-2.5 rounded-xl bg-[rgba(213,27,29,0.1)] border border-[#D51B1D]/30 text-[#D51B1D] flex-shrink-0">
             <AlertCircle className="w-5 h-5" />
           </div>
           <div className="space-y-1">
             <h3 className="text-base font-bold text-[#003339]">Unable to Confidently Estimate Out-of-Pocket Expenses</h3>
             <p className="text-xs text-[#4A5859] leading-relaxed">
-              {estimate.confidence_reason || 'Critical policy parameters or baseline pricing benchmarks are missing.'}
+              {estimate.confidence_reason || 'Critical policy parameters or baseline pricing benchmarks are missing from document evidence.'}
             </p>
           </div>
         </div>
 
         <div className="p-4 rounded-xl bg-white border border-[#E2E8E8] space-y-2 text-xs">
-          <span className="font-semibold text-[#003339] block">Missing Information Required for Audit:</span>
+          <span className="font-semibold text-[#003339] block">Missing Information Required for Deterministic Audit:</span>
           <ul className="list-disc list-inside space-y-1 text-[#4A5859] font-mono">
             <li>Verified healthcare procedure benchmark cost for '{estimate.procedure}' in '{estimate.city}'.</li>
-            <li>Explicit policy coverage schedule or sum insured parameters.</li>
+            <li>Explicit policy coverage schedule or grounded Sum Insured parameters with page evidence.</li>
           </ul>
         </div>
       </div>
     );
   }
 
+  // 4. Normal Calculated State (Phases 7, 8, 9, 10)
   const getConfidenceBadge = (confidence) => {
     switch (confidence?.toUpperCase()) {
       case 'HIGH':
@@ -55,9 +185,9 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
         );
       case 'MEDIUM':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[rgba(213,27,29,0.08)] text-[#D51B1D] border border-[#D51B1D]/40">
-            <AlertCircle className="w-3.5 h-3.5 mr-1 text-[#D51B1D]" />
-            MEDIUM CONFIDENCE (SCENARIO PENALTY)
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300">
+            <AlertCircle className="w-3.5 h-3.5 mr-1 text-amber-700" />
+            MEDIUM CONFIDENCE (ROOM / SCENARIO AMBIGUITY)
           </span>
         );
       default:
@@ -70,19 +200,24 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
     }
   };
 
-  const handleOpenCitation = (cite) => {
-    setSelectedCitation(cite);
-    setIsModalOpen(true);
-  };
+  const costMin = estimate.treatment_cost?.min ?? estimate.treatment_cost_range?.min ?? 0;
+  const costMax = estimate.treatment_cost?.max ?? estimate.treatment_cost_range?.max ?? 0;
+  const eligibleMin = estimate.eligible_amount?.min ?? estimate.eligible_amount_range?.min ?? 0;
+  const eligibleMax = estimate.eligible_amount?.max ?? estimate.eligible_amount_range?.max ?? 0;
+  const covMin = estimate.insurance_contribution?.min ?? estimate.estimated_coverage_range?.min ?? 0;
+  const covMax = estimate.insurance_contribution?.max ?? estimate.estimated_coverage_range?.max ?? 0;
+  const oopMin = estimate.patient_payable?.min ?? estimate.estimated_oop_range?.min ?? 0;
+  const oopMax = estimate.patient_payable?.max ?? estimate.estimated_oop_range?.max ?? 0;
+  const sublimitVal = estimate.applicable_sublimit ?? estimate.sub_limit;
+  const copayVal = estimate.copay_percent ?? 0;
+  const copayAmtMin = estimate.copay_amount?.min ?? (eligibleMin * (copayVal / 100));
+  const copayAmtMax = estimate.copay_amount?.max ?? (eligibleMax * (copayVal / 100));
+  const appliedRulesList = estimate.rules_applied ?? estimate.applied_rules ?? [];
+  const citationsList = estimate.evidence ?? estimate.citations ?? [];
 
   return (
     <div id="results" className="space-y-6">
-      {/* Citation Detail Modal */}
-      <CitationModal
-        citation={selectedCitation}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
+      <CitationModal citation={selectedCitation} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
       {/* Main Result Banner */}
       <div className="card-white p-6 sm:p-7 space-y-6">
@@ -98,7 +233,7 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
               Coverage &amp; Financial Estimation Result
             </h2>
             <p className="text-xs text-[#4A5859] mt-1">
-              Calculated using a deterministic financial rule engine. Policy rules grounded with exact page citations.
+              Calculated using deterministic Python rules. Policy evidence verified with line-level page citations.
             </p>
           </div>
 
@@ -130,7 +265,7 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
           </div>
         </div>
 
-        {/* 3 Key Financial Cards — SPACIOUS HORIZONTAL ROW CARDS (NO TEXT WRAPPING) */}
+        {/* 3 Key Financial Cards */}
         <div className="space-y-3">
           {/* Card 1: Base Treatment Cost Range */}
           <div className="p-4 rounded-xl bg-[#F7F7F8] border border-[#E2E8E8] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -140,12 +275,12 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
               </div>
               <div>
                 <h4 className="text-xs font-bold text-[#003339]">Treatment Cost Range</h4>
-                <p className="text-[11px] text-[#4A5859] font-mono">Source: {estimate.data_source}</p>
+                <p className="text-[11px] text-[#4A5859] font-mono">Source: {estimate.data_source} ({estimate.data_type || 'synthetic'})</p>
               </div>
             </div>
             <div className="sm:text-right">
               <p className="text-lg font-black text-[#003339] tracking-tight font-mono whitespace-nowrap">
-                {formatINR(estimate.treatment_cost_range.min)} – {formatINR(estimate.treatment_cost_range.max)}
+                {formatINR(costMin)} – {formatINR(costMax)}
               </p>
             </div>
           </div>
@@ -158,17 +293,17 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
               </div>
               <div>
                 <h4 className="text-xs font-bold text-[#003339]">Estimated Policy Coverage</h4>
-                <p className="text-[11px] text-[#4A5859] font-mono">Net Coverage Amount</p>
+                <p className="text-[11px] text-[#4A5859] font-mono">Insurance Net Contribution</p>
               </div>
             </div>
             <div className="sm:text-right">
               <p className="text-lg font-black text-[#006668] tracking-tight font-mono whitespace-nowrap">
-                {formatINR(estimate.estimated_coverage_range.min)} – {formatINR(estimate.estimated_coverage_range.max)}
+                {formatINR(covMin)} – {formatINR(covMax)}
               </p>
             </div>
           </div>
 
-          {/* Card 3: VISUALLY DOMINANT OUT-OF-POCKET ESTIMATE CARD IN CRIMSON RED (#D51B1D) */}
+          {/* Card 3: Out-of-Pocket Estimate Card */}
           <div className="p-4 sm:p-5 rounded-xl bg-[rgba(213,27,29,0.06)] border-2 border-[#D51B1D] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-xl bg-[rgba(213,27,29,0.12)] border border-[#D51B1D]/30 flex items-center justify-center text-[#D51B1D] shrink-0">
@@ -181,24 +316,27 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
             </div>
             <div className="sm:text-right">
               <p className="text-xl sm:text-2xl font-black text-[#D51B1D] tracking-tight font-mono whitespace-nowrap">
-                {formatINR(estimate.estimated_oop_range.min)} – {formatINR(estimate.estimated_oop_range.max)}
+                {formatINR(oopMin)} – {formatINR(oopMax)}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Demo Disclaimer */}
+        {/* Disclaimer with Synthetic Benchmark Notice */}
         <div className="p-3 rounded-xl bg-[#F7F7F8] border border-[#E2E8E8] flex items-center justify-between text-xs text-[#4A5859]">
           <span className="flex items-center space-x-2">
             <Info className="w-4 h-4 text-[#39ABAD] flex-shrink-0" />
-            <span><strong>Illustrative demo cost benchmark</strong> — not a final hospital quotation.</span>
+            <span>
+              <strong>{estimate.data_type === 'synthetic' ? 'Synthetic Demo Benchmark' : 'Cost Benchmark'}</strong>
+              {' '}— benchmark data for scenario testing, not an official hospital invoice.
+            </span>
           </span>
           <span className="text-[11px] font-mono text-[#4A5859] hidden sm:inline">
-            Reason: {estimate.confidence_reason || 'Verified page citations'}
+            Status: {estimate.status} · {estimate.confidence_reason}
           </span>
         </div>
 
-        {/* Expandable "How this estimate was calculated" section */}
+        {/* Step-by-Step Breakdown */}
         <div className="pt-2 border-t border-[#E2E8E8]">
           <button
             onClick={() => setShowCalculationFlow(!showCalculationFlow)}
@@ -206,7 +344,7 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
           >
             <span className="flex items-center space-x-2">
               <Scale className="w-4 h-4 text-[#006668]" />
-              <span>How this estimate was calculated (Step-by-Step Breakdown)</span>
+              <span>How this estimate was calculated (Deterministic Math Engine Pipeline)</span>
             </span>
             <span className="text-[11px] text-[#4A5859] font-mono flex items-center space-x-1">
               <span>{showCalculationFlow ? 'Hide Breakdown' : 'Show Breakdown'}</span>
@@ -218,40 +356,40 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
             <div className="mt-3 p-4 rounded-xl bg-[#F7F7F8] border border-[#E2E8E8] space-y-3 font-mono text-xs">
               <div className="flex items-center space-x-2 text-[#006668] font-bold text-xs font-sans">
                 <ArrowRight className="w-4 h-4" />
-                <span>Horizontal Calculation Pipeline:</span>
+                <span>Deterministic Calculation Pipeline:</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="p-3 rounded-lg bg-white border border-[#E2E8E8] flex flex-col justify-between space-y-1">
                   <span className="text-[10px] text-[#4A5859] uppercase font-sans">1. Treatment Cost</span>
-                  <span className="text-xs text-[#003339] font-bold">{formatINR(estimate.treatment_cost_range.min)} – {formatINR(estimate.treatment_cost_range.max)}</span>
+                  <span className="text-xs text-[#003339] font-bold">{formatINR(costMin)} – {formatINR(costMax)}</span>
                 </div>
 
                 <div className="p-3 rounded-lg bg-white border border-[#E2E8E8] flex flex-col justify-between space-y-1">
                   <span className="text-[10px] text-[#4A5859] uppercase font-sans">2. Policy Sub-Limit</span>
                   <span className="text-xs text-[#006668] font-bold">
-                    {estimate.sub_limit ? formatINR(estimate.sub_limit) : 'No Sub-Limit Cap'}
+                    {sublimitVal ? formatINR(sublimitVal) : 'No Sub-Limit Cap'}
                   </span>
                 </div>
 
                 <div className="p-3 rounded-lg bg-white border border-[#E2E8E8] flex flex-col justify-between space-y-1">
                   <span className="text-[10px] text-[#4A5859] uppercase font-sans">3. Eligible Claim</span>
-                  <span className="text-xs text-[#003339] font-bold">{formatINR(estimate.eligible_amount_range.min)} – {formatINR(estimate.eligible_amount_range.max)}</span>
+                  <span className="text-xs text-[#003339] font-bold">{formatINR(eligibleMin)} – {formatINR(eligibleMax)}</span>
                 </div>
 
                 <div className="p-3 rounded-lg bg-white border border-[#E2E8E8] flex flex-col justify-between space-y-1">
-                  <span className="text-[10px] text-[#4A5859] uppercase font-sans">4. Co-Pay Deduction</span>
-                  <span className="text-xs text-[#D51B1D] font-bold">{estimate.copay_percent || 0}% Co-Pay</span>
+                  <span className="text-[10px] text-[#4A5859] uppercase font-sans">4. Co-Pay Deduction ({copayVal}%)</span>
+                  <span className="text-xs text-[#D51B1D] font-bold">{formatINR(copayAmtMin)} – {formatINR(copayAmtMax)}</span>
                 </div>
 
                 <div className="p-3 rounded-lg bg-[rgba(57,171,173,0.1)] border border-[#39ABAD]/40 flex flex-col justify-between space-y-1">
-                  <span className="text-[10px] text-[#006668] uppercase font-sans font-bold">5. Insurance Coverage</span>
-                  <span className="text-xs text-[#006668] font-bold">{formatINR(estimate.estimated_coverage_range.min)} – {formatINR(estimate.estimated_coverage_range.max)}</span>
+                  <span className="text-[10px] text-[#006668] uppercase font-sans font-bold">5. Insurance Contribution</span>
+                  <span className="text-xs text-[#006668] font-bold">{formatINR(covMin)} – {formatINR(covMax)}</span>
                 </div>
 
                 <div className="p-3 rounded-lg bg-[rgba(213,27,29,0.08)] border border-[#D51B1D]/40 flex flex-col justify-between space-y-1">
                   <span className="text-[10px] text-[#D51B1D] uppercase font-sans font-bold">6. Patient Out-of-Pocket</span>
-                  <span className="text-xs text-[#D51B1D] font-black">{formatINR(estimate.estimated_oop_range.min)} – {formatINR(estimate.estimated_oop_range.max)}</span>
+                  <span className="text-xs text-[#D51B1D] font-black">{formatINR(oopMin)} – {formatINR(oopMax)}</span>
                 </div>
               </div>
             </div>
@@ -259,7 +397,7 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
         </div>
       </div>
 
-      {/* Applied Policy Rules & Deductions (Horizontal Full Width) */}
+      {/* Applied Policy Rules */}
       <div className="card-white p-5 space-y-3">
         <div className="flex items-center justify-between pb-2.5 border-b border-[#F7F7F8]">
           <h3 className="font-bold text-[#003339] text-sm flex items-center space-x-2">
@@ -267,13 +405,13 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
             <span>Applied Calculation Rules</span>
           </h3>
           <span className="text-xs text-[#4A5859] font-mono">
-            {estimate.applied_rules.length} {estimate.applied_rules.length === 1 ? 'Rule' : 'Rules'} Applied
+            {appliedRulesList.length} {appliedRulesList.length === 1 ? 'Rule' : 'Rules'} Applied
           </span>
         </div>
 
-        {estimate.applied_rules.length > 0 ? (
+        {appliedRulesList.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {estimate.applied_rules.map((rule, idx) => (
+            {appliedRulesList.map((rule, idx) => (
               <div key={idx} className="p-3 rounded-xl bg-[#F7F7F8] border border-[#E2E8E8] flex flex-col justify-between space-y-1.5">
                 <div className="flex items-start justify-between gap-2">
                   <span className="text-xs font-bold text-[#003339] leading-snug">{rule.rule_name}</span>
@@ -290,7 +428,7 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
         )}
       </div>
 
-      {/* Evidence & Page Citations (Horizontal Full Width) */}
+      {/* Evidence & Page Citations */}
       <div className="card-white p-5 space-y-3">
         <div className="flex items-center justify-between pb-2.5 border-b border-[#F7F7F8]">
           <h3 className="font-bold text-[#003339] text-sm flex items-center space-x-2">
@@ -301,7 +439,7 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {estimate.citations.map((cite, idx) => (
+          {citationsList.map((cite, idx) => (
             <div 
               key={idx} 
               onClick={() => handleOpenCitation(cite)}

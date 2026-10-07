@@ -33,9 +33,18 @@ export default function PolicyRulesCards({ rules }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {rules.map((rule, idx) => {
           const IconComponent = rule.icon || getRuleIcon(rule.rule_type);
-          const displayValue = rule.value !== undefined 
-            ? (typeof rule.value === 'number' && rule.unit === 'INR' ? `₹${rule.value.toLocaleString('en-IN')}` : `${rule.value}${rule.unit === 'percent' ? '%' : ''}`)
-            : rule.value;
+          const rawLabel = rule.label || rule.rule_key || rule.rule_type;
+          const displayLabel = rawLabel.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          let displayValue = rule.value;
+          if (rule.value !== undefined && rule.value !== null) {
+            if (rule.rule_type === 'copay' || rule.unit === 'percent') {
+              displayValue = `${rule.value}%`;
+            } else if (typeof rule.value === 'number') {
+              displayValue = `₹${rule.value.toLocaleString('en-IN')}`;
+            } else {
+              displayValue = String(rule.value);
+            }
+          }
 
           return (
             <div 
@@ -43,7 +52,7 @@ export default function PolicyRulesCards({ rules }) {
               className="p-3.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-500 transition-all space-y-2 shadow-2xs group"
             >
               <div className="flex items-center justify-between text-slate-500">
-                <span className="text-xs font-semibold text-slate-700 truncate">{rule.label || rule.rule_type}</span>
+                <span className="text-xs font-semibold text-slate-700 truncate">{displayLabel}</span>
                 <IconComponent className="w-4 h-4 text-emerald-700 group-hover:scale-105 transition-transform" />
               </div>
 
@@ -52,8 +61,8 @@ export default function PolicyRulesCards({ rules }) {
               </p>
 
               <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 font-mono">
-                <span>Page {rule.page}</span>
-                <span className="text-emerald-700 font-bold">{rule.clause}</span>
+                <span>Page {rule.page || 1}</span>
+                <span className="text-emerald-700 font-bold">{rule.clause || 'N/A'}</span>
               </div>
             </div>
           );

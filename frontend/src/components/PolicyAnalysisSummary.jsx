@@ -102,7 +102,7 @@ export default function PolicyAnalysisSummary({ policyId, uploadData, onReset })
       </div>
 
       {/* Extracted Policy Rules Cards */}
-      <PolicyRulesCards />
+      <PolicyRulesCards rules={policyDetail?.rules} />
 
       {/* Page-by-Page Interactive Text Inspector */}
       {loading ? (

@@ -1,6 +1,10 @@
 import logging
 from typing import List, Dict, Any, Optional
-from app.extraction.normalizer import ValueNormalizer
+
+from app.validation.policy_validator import PolicyValidator, ValidationError
+from app.calculation.rule_matcher import TreatmentRuleMatcher, MatchedRules
+from app.calculation.coverage_checker import CoverageChecker, CoverageCheckResult
+from app.services.math_engine import MathEngine
 
 logger = logging.getLogger(__name__)
 
@@ -9,6 +13,12 @@ class FinancialCalculationEngine:
     Deterministic Financial Rule Engine for Health Insurance Claims Calculation.
     Decouples financial math from LLM text generation to guarantee 100% reproducible,
     auditable financial out-of-pocket estimations.
+    
+    Phases 1, 3, 4, 5, 6, 7, 8, 9, 10, 14 compliant:
+    - Never uses raw LLM output; verifies policy evidence.
+    - Deterministic Python math: sub-limits, co-payments, sum insured.
+    - Evaluates coverage, exclusions, waiting periods, room rules.
+    - No hardcoded universal room penalty: requires explicit policy definition or flags uncertainty.
     """
 
     @staticmethod
@@ -17,25 +27,71 @@ class FinancialCalculationEngine:
         base_max_cost: float,
         procedure_name: str,
         city: str,
-        room_category: str,
-        policy_rules: List[Dict[str, Any]],
+        room_category: str = "Standard",
+        policy_rules: Optional[List[Dict[str, Any]]] = None,
         data_source: str = "State Healthcare Package Benchmark 2025",
-        cost_found: bool = True
+        data_type: str = "synthetic",
+        cost_found: bool = True,
+        city_tier: Optional[str] = None,
+        scenario: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Calculates out-of-pocket medical expense ranges by applying policy rules sequentially:
-        1. Base Treatment Cost Lookup
-        2. Procedure Sub-Limit Cap
-        3. Room Rent Proportionate Deductions
-        4. Co-Payment Deductions
-        5. Out-of-Pocket Result, Evidence Citations, & Confidence Evaluation
+        Executes complete deterministic calculation pipeline:
+        1. Input Validation & Safety checks
+        2. Policy JSON Validation Layer
+        3. Benchmark Lookup Verification
+        4. Rule Matching
+        5. Coverage, Exclusion, Waiting-Period Checks
+        6. Mathematical Computation (sub-limit, room, co-pay, insurance, patient payable)
+        7. Evidence Preservation & Confidence Scoring
         """
-        applied_rules = []
-        citations = []
+        policy_rules = policy_rules or []
+        scenario = scenario or {}
 
-        # 0. Uncertainty Handling: Missing Cost Benchmark
+        # -------------------------------------------------------------
+        # Phase 14: Input Validation / Safety Checks
+        # -------------------------------------------------------------
+        try:
+            PolicyValidator.validate_calculation_inputs(
+                treatment_min=base_min_cost,
+                treatment_max=base_max_cost,
+                room_category=room_category
+            )
+        except ValidationError as ve:
+            logger.error(f"[FIN-ENGINE] Input validation failed: {str(ve)}")
+            return {
+                "status": "UNABLE_TO_ESTIMATE",
+                "message": f"Input validation error: {str(ve)}",
+                "error": str(ve),
+                "procedure": procedure_name,
+                "city": city,
+                "room_category": room_category,
+                "treatment_cost_range": {"min": 0.0, "max": 0.0},
+                "treatment_cost": {"min": 0.0, "max": 0.0},
+                "applicable_sublimit": None,
+                "eligible_amount_range": {"min": 0.0, "max": 0.0},
+                "eligible_amount": {"min": 0.0, "max": 0.0},
+                "copay_percent": 0.0,
+                "copay_amount": {"min": 0.0, "max": 0.0},
+                "estimated_coverage_range": {"min": 0.0, "max": 0.0},
+                "insurance_contribution": {"min": 0.0, "max": 0.0},
+                "estimated_oop_range": {"min": 0.0, "max": 0.0},
+                "patient_payable": {"min": 0.0, "max": 0.0},
+                "confidence": "LOW",
+                "confidence_reason": str(ve),
+                "applied_rules": [],
+                "rules_applied": [],
+                "citations": [],
+                "evidence": [],
+                "data_source": data_source,
+                "data_type": data_type
+            }
+
+        # -------------------------------------------------------------
+        # Phase 2 / Uncertainty: Missing Cost Benchmark
+        # -------------------------------------------------------------
         if not cost_found or base_min_cost <= 0:
-            logger.warning(f"[FIN-ENGINE] UNABLE_TO_ESTIMATE: Missing cost benchmark for procedure '{procedure_name}' in city '{city}'.")
+            logger.warning(f"[FIN-ENGINE] Missing benchmark for '{procedure_name}' in '{city}'.")
             return {
                 "status": "UNABLE_TO_ESTIMATE",
                 "message": f"Unable to confidently estimate costs: No baseline healthcare pricing benchmark available for '{procedure_name}' in '{city}'.",
@@ -43,188 +99,264 @@ class FinancialCalculationEngine:
                 "city": city,
                 "room_category": room_category,
                 "treatment_cost_range": {"min": 0.0, "max": 0.0},
+                "treatment_cost": {"min": 0.0, "max": 0.0},
+                "applicable_sublimit": None,
                 "eligible_amount_range": {"min": 0.0, "max": 0.0},
+                "eligible_amount": {"min": 0.0, "max": 0.0},
+                "copay_percent": 0.0,
+                "copay_amount": {"min": 0.0, "max": 0.0},
                 "estimated_coverage_range": {"min": 0.0, "max": 0.0},
+                "insurance_contribution": {"min": 0.0, "max": 0.0},
                 "estimated_oop_range": {"min": 0.0, "max": 0.0},
+                "patient_payable": {"min": 0.0, "max": 0.0},
                 "confidence": "LOW",
-                "confidence_reason": f"No baseline healthcare pricing benchmark available for {procedure_name} in {city}.",
+                "confidence_reason": f"No baseline healthcare pricing benchmark available for '{procedure_name}' in '{city}'.",
                 "missing_information": [f"Hospital cost data for {procedure_name} in {city}"],
                 "applied_rules": [],
+                "rules_applied": [],
                 "citations": [],
+                "evidence": [],
                 "data_source": data_source,
-                "data_type": "synthetic_demo"
+                "data_type": data_type
             }
 
-        # 1. Parse Policy Parameters from Extracted Rules with Value Normalization
-        sum_insured: Optional[float] = None
-        copay_percent: float = 0.0
-        room_rent_cap_daily: float = 5000.0
-        procedure_sub_limit: Optional[float] = None
-        has_sum_insured_rule = False
+        # -------------------------------------------------------------
+        # Phase 1: Policy JSON Validation Layer
+        # -------------------------------------------------------------
+        validation_result = PolicyValidator.validate_policy_rules(policy_rules)
+        if not validation_result.is_valid:
+            logger.warning("[FIN-ENGINE] Policy rules validation failed or returned no usable rules.")
+            return {
+                "status": "UNABLE_TO_ESTIMATE",
+                "message": "Unable to confidently estimate: Policy lacks validated grounded financial rules.",
+                "procedure": procedure_name,
+                "city": city,
+                "room_category": room_category,
+                "treatment_cost_range": {"min": 0.0, "max": 0.0},
+                "treatment_cost": {"min": 0.0, "max": 0.0},
+                "applicable_sublimit": None,
+                "eligible_amount_range": {"min": 0.0, "max": 0.0},
+                "eligible_amount": {"min": 0.0, "max": 0.0},
+                "copay_percent": 0.0,
+                "copay_amount": {"min": 0.0, "max": 0.0},
+                "estimated_coverage_range": {"min": 0.0, "max": 0.0},
+                "insurance_contribution": {"min": 0.0, "max": 0.0},
+                "estimated_oop_range": {"min": 0.0, "max": 0.0},
+                "patient_payable": {"min": 0.0, "max": 0.0},
+                "confidence": "LOW",
+                "confidence_reason": "Policy document has no validated coverage schedule or clauses.",
+                "missing_information": validation_result.errors or ["Valid policy rules with page and text evidence"],
+                "applied_rules": [],
+                "rules_applied": [],
+                "citations": [],
+                "evidence": [],
+                "data_source": data_source,
+                "data_type": data_type
+            }
 
-        for rule in policy_rules:
-            rule_type = rule.get("rule_type")
-            raw_val = rule.get("value")
-            page = rule.get("page")
-            clause = rule.get("clause") or "N/A"
-            snippet = rule.get("source_text") or "Source location unavailable"
+        # -------------------------------------------------------------
+        # Phase 3: Rule Matching Service
+        # -------------------------------------------------------------
+        matched = TreatmentRuleMatcher.match_rules(
+            procedure=procedure_name,
+            city=city,
+            city_tier=city_tier,
+            room_category=room_category,
+            validated_rules=validation_result.validated_rules
+        )
 
-            if rule_type == "sum_insured":
-                snip_lower = snippet.lower()
-                is_daily_cap = any(k in snip_lower for k in ["per day", "/day", "room rent", "icu charges"])
-                if not is_daily_cap:
-                    val = ValueNormalizer.parse_monetary_value(raw_val, source_text=snippet)
-                    if val and val >= 10000.0:  # Valid sum insured (>= 10,000)
-                        sum_insured = val
-                        has_sum_insured_rule = True
-                        citations.append({
-                            "rule": "Sum Insured",
-                            "details": f"INR {val:,.2f}",
-                            "page": page if page is not None else "N/A",
-                            "clause": clause,
-                            "source_text": snippet
-                        })
-            elif rule_type == "copay":
-                val = ValueNormalizer.parse_percentage_value(raw_val, source_text=snippet)
-                copay_percent = val
+        # -------------------------------------------------------------
+        # Phase 4, 5, 6: Coverage, Exclusion, Waiting-Period Checks
+        # -------------------------------------------------------------
+        coverage_check = CoverageChecker.check_coverage(
+            procedure=procedure_name,
+            matched_rules=matched,
+            scenario=scenario
+        )
+
+        if not coverage_check.is_eligible_for_calculation:
+            # Excluded, Waiting-Period active, or Insufficient information
+            logger.info(f"[FIN-ENGINE] Coverage Check halted calculation: {coverage_check.status} - {coverage_check.reason}")
+            citations = []
+            if coverage_check.evidence_rule:
                 citations.append({
-                    "rule": "Mandatory Co-Payment",
-                    "details": f"{val:.1f}% Co-Pay Deduction",
-                    "page": page if page is not None else "N/A",
-                    "clause": clause,
-                    "source_text": snippet
-                })
-            elif rule_type == "room_rent_limit":
-                val = ValueNormalizer.parse_monetary_value(raw_val, source_text=snippet) or 5000.0
-                room_rent_cap_daily = val
-                citations.append({
-                    "rule": "Room Rent Limit",
-                    "details": f"INR {val:,.2f} / day (Standard Single Room)",
-                    "page": page if page is not None else "N/A",
-                    "clause": clause,
-                    "source_text": snippet
-                })
-            elif rule_type == "sub_limit":
-                rule_key = str(rule.get("rule_key", "")).lower()
-                proc_lower = procedure_name.lower()
-                if proc_lower in rule_key or proc_lower in snippet.lower() or rule_key in proc_lower:
-                    val = ValueNormalizer.parse_monetary_value(raw_val, source_text=snippet)
-                    if val and val > 100.0:  # Must be a valid monetary sub-limit (> 100)
-                        procedure_sub_limit = val
-                        citations.append({
-                            "rule": f"{procedure_name} Procedure Sub-Limit",
-                            "details": f"Capped at INR {val:,.2f}",
-                            "page": page if page is not None else "N/A",
-                            "clause": clause,
-                            "source_text": snippet
-                        })
-            elif rule_type == "waiting_period":
-                citations.append({
-                    "rule": "Waiting Period Clause",
-                    "details": f"{raw_val} Waiting Period",
-                    "page": page if page is not None else "N/A",
-                    "clause": clause,
-                    "source_text": snippet
+                    "rule": f"{coverage_check.status.replace('_', ' ').title()} Clause",
+                    "details": coverage_check.reason,
+                    "page": coverage_check.page or "N/A",
+                    "clause": coverage_check.clause or "N/A",
+                    "source_text": coverage_check.source_text or ""
                 })
 
-        # 2. Base Cost Range
+            return {
+                "status": coverage_check.status,  # "EXCLUDED", "WAITING_PERIOD", "INSUFFICIENT_INFORMATION"
+                "message": coverage_check.reason,
+                "procedure": procedure_name,
+                "city": city,
+                "room_category": room_category,
+                "treatment_cost_range": {"min": round(base_min_cost, 2), "max": round(base_max_cost, 2)},
+                "treatment_cost": {"min": round(base_min_cost, 2), "max": round(base_max_cost, 2)},
+                "applicable_sublimit": None,
+                "eligible_amount_range": {"min": 0.0, "max": 0.0},
+                "eligible_amount": {"min": 0.0, "max": 0.0},
+                "copay_percent": 0.0,
+                "copay_amount": {"min": 0.0, "max": 0.0},
+                "estimated_coverage_range": {"min": 0.0, "max": 0.0},
+                "insurance_contribution": {"min": 0.0, "max": 0.0},
+                # For excluded / waiting period, patient liability is full treatment cost
+                "estimated_oop_range": {"min": round(base_min_cost, 2), "max": round(base_max_cost, 2)},
+                "patient_payable": {"min": round(base_min_cost, 2), "max": round(base_max_cost, 2)},
+                "confidence": "HIGH" if coverage_check.page is not None else "MEDIUM",
+                "confidence_reason": coverage_check.reason,
+                "applied_rules": [{
+                    "rule_name": f"Policy {coverage_check.status.replace('_', ' ').title()}",
+                    "description": coverage_check.reason,
+                    "impact": "100% Patient Payable (Zero Insurance Coverage)"
+                }],
+                "rules_applied": [{
+                    "rule_name": f"Policy {coverage_check.status.replace('_', ' ').title()}",
+                    "description": coverage_check.reason,
+                    "impact": "100% Patient Payable (Zero Insurance Coverage)"
+                }],
+                "citations": citations,
+                "evidence": citations,
+                "coverage_checks": coverage_check.to_dict(),
+                "data_source": data_source,
+                "data_type": data_type
+            }
+
+        # -------------------------------------------------------------
+        # Phase 7 & 8: Deterministic Math Engine
+        # -------------------------------------------------------------
         cost_min = float(base_min_cost)
         cost_max = float(base_max_cost)
 
-        # 3. Apply Procedure Sub-Limit Cap
+        applied_rules = []
+        citations = list(matched.matched_citations)
+
+        # 1. Base eligible amount initialized to treatment cost range
         eligible_min = cost_min
         eligible_max = cost_max
 
-        if procedure_sub_limit and procedure_sub_limit > 0:
-            eligible_min = min(cost_min, procedure_sub_limit)
-            eligible_max = min(cost_max, procedure_sub_limit)
+        # 2. Procedure Sub-Limit Cap
+        sub_limit_val = matched.procedure_sublimit
+        if sub_limit_val and sub_limit_val > 0:
+            eligible_min = min(eligible_min, sub_limit_val)
+            eligible_max = min(eligible_max, sub_limit_val)
             applied_rules.append({
                 "rule_name": "Procedure Sub-Limit Applied",
-                "description": f"{procedure_name} claim amount capped at sub-limit of INR {procedure_sub_limit:,.2f}.",
+                "description": f"{procedure_name} claim amount capped at sub-limit of INR {sub_limit_val:,.2f}.",
                 "impact": f"Eligible claim restricted from INR {cost_max:,.2f} to INR {eligible_max:,.2f}"
             })
 
-        # 4. Apply Room Rent Proportionate Deduction Penalty
-        if room_category.lower() == "deluxe":
-            proportionate_penalty_ratio = 0.70  # 30% penalty due to room upgrade
-            eligible_min = eligible_min * proportionate_penalty_ratio
-            eligible_max = eligible_max * proportionate_penalty_ratio
+        # 3. Room Rules (Phase 8 & 10) - No arbitrary hardcoded 30% penalty
+        room_category_clean = room_category.strip().lower()
+        room_rule_ambiguity = False
+        room_penalty_ratio = 0.0
+
+        if room_category_clean != "standard":
+            # Upgraded room category (e.g., Deluxe)
+            if matched.room_proportionate_deduction_rate is not None:
+                # Policy explicitly defined a proportionate deduction rate
+                room_penalty_ratio = matched.room_proportionate_deduction_rate
+                applied_rules.append({
+                    "rule_name": "Policy Proportionate Room Rent Deduction",
+                    "description": (
+                        f"Room upgraded to '{room_category}'. Policy clause prescribes "
+                        f"{room_penalty_ratio * 100:.0f}% proportionate deduction across hospital charges."
+                    ),
+                    "impact": f"Eligible coverage reduced by {room_penalty_ratio * 100:.0f}%"
+                })
+            elif matched.room_rent_cap_daily:
+                # Policy defines a daily cap but does NOT prescribe an exact proportionate deduction formula
+                # Do NOT invent or hardcode 30%! Flag uncertainty.
+                room_rule_ambiguity = True
+                applied_rules.append({
+                    "rule_name": "Room Category Alert",
+                    "description": (
+                        f"Selected '{room_category}' room may exceed daily allowance (INR {matched.room_rent_cap_daily:,.2f}/day). "
+                        "Policy does not define a fixed proportionate deduction percentage formula; no arbitrary deduction applied."
+                    ),
+                    "impact": "Room penalty undetermined by contract text"
+                })
+        else:
+            # Standard room fits within allowed schedule
+            if matched.room_rent_cap_daily:
+                applied_rules.append({
+                    "rule_name": "Standard Room Rent Category Approved",
+                    "description": f"Standard Room selected, within policy limit of INR {matched.room_rent_cap_daily:,.2f} / day.",
+                    "impact": "No proportionate room deduction"
+                })
+
+        # 4. Deterministic Financial Math Engine (Step 8, 9, 10)
+        math_result = MathEngine.calculate(
+            cost_min=cost_min,
+            cost_max=cost_max,
+            copay_percent=matched.copay_percent,
+            treatment_sublimit=matched.procedure_sublimit,
+            sum_insured=matched.sum_insured,
+            room_penalty_ratio=room_penalty_ratio
+        )
+
+        if matched.copay_percent > 0:
             applied_rules.append({
-                "rule_name": "Room Rent Proportionate Deduction Penalty",
-                "description": f"Selected Deluxe Room exceeds Standard Room daily cap of INR {room_rent_cap_daily:,.2f}. 30% proportionate deduction penalty applied across associated hospital charges.",
-                "impact": "Eligible coverage reduced by 30%"
+                "rule_name": f"{matched.copay_percent:.0f}% Mandatory Co-Payment",
+                "description": f"Policyholder pays mandatory {matched.copay_percent:.0f}% co-payment on all eligible claims.",
+                "impact": f"Deducted {matched.copay_percent:.0f}% from eligible amount"
             })
 
-        # 5. Sum Insured Cap Check
-        if sum_insured and sum_insured > 0:
-            eligible_min = min(eligible_min, sum_insured)
-            eligible_max = min(eligible_max, sum_insured)
-
-        # 6. Apply Co-payment Percentage
-        covered_min = eligible_min * (1.0 - copay_percent / 100.0)
-        covered_max = eligible_max * (1.0 - copay_percent / 100.0)
-
-        if copay_percent > 0:
-            applied_rules.append({
-                "rule_name": f"{copay_percent:.0f}% Mandatory Co-Payment",
-                "description": f"Policyholder pays mandatory {copay_percent:.0f}% co-payment on all eligible claims.",
-                "impact": f"Deducted {copay_percent:.0f}% from eligible amount"
-            })
-
-        # 7. Calculate Out-of-Pocket Expenses
-        oop_min = max(0.0, cost_min - covered_min)
-        oop_max = max(0.0, cost_max - covered_max)
-
-        # 8. Step 11 Debug Logging
-        logger.info("=== FINANCIAL ESTIMATE CALCULATION DEBUG LOG ===")
-        logger.info(f"Procedure: '{procedure_name}', City: '{city}', Room: '{room_category}'")
-        logger.info(f"Treatment Cost: ₹{cost_min:,.2f} - ₹{cost_max:,.2f}")
-        logger.info(f"Sub-Limit: {f'₹{procedure_sub_limit:,.2f}' if procedure_sub_limit else 'None'}")
-        logger.info(f"Co-Pay: {copay_percent:.1f}%")
-        logger.info(f"Eligible Amount: ₹{eligible_min:,.2f} - ₹{eligible_max:,.2f}")
-        logger.info(f"Coverage: ₹{covered_min:,.2f} - ₹{covered_max:,.2f}")
-        logger.info(f"Out-of-Pocket (OOP): ₹{oop_min:,.2f} - ₹{oop_max:,.2f}")
-        logger.info("================================================")
-
-        # 9. Evidence-Based Confidence Scoring System
-        if not citations or not has_sum_insured_rule:
+        # -------------------------------------------------------------
+        # Phase 10: Confidence & Transparency Evaluation
+        # -------------------------------------------------------------
+        if not validation_result.has_sum_insured or not citations:
             confidence = "LOW"
-            confidence_reason = "Missing primary Sum Insured or key policy coverage schedule clauses."
-        elif room_category.lower() == "deluxe":
+            confidence_reason = "Missing primary Sum Insured or key schedule clauses in policy evidence."
+        elif room_rule_ambiguity:
             confidence = "MEDIUM"
-            confidence_reason = "Proportionate room rent penalty applied due to room category upgrade."
+            confidence_reason = (
+                f"Room upgrade to '{room_category}' has daily cap in policy, but contract text does not specify "
+                "an exact proportionate deduction percentage."
+            )
         else:
             confidence = "HIGH"
-            confidence_reason = "All required policy clauses grounded with exact page citations and verified procedure cost benchmark."
+            confidence_reason = "All required policy rules verified with grounded page citations and active cost benchmark."
 
-        return {
-            "status": "SUCCESS",
+        # -------------------------------------------------------------
+        # Phase 9: Structured Calculation Breakdown
+        # -------------------------------------------------------------
+        result = {
+            "status": "calculated",
             "procedure": procedure_name,
             "city": city,
             "room_category": room_category,
-            "treatment_cost_range": {
-                "min": round(cost_min, 2),
-                "max": round(cost_max, 2)
-            },
-            "eligible_amount_range": {
-                "min": round(eligible_min, 2),
-                "max": round(eligible_max, 2)
-            },
-            "estimated_coverage_range": {
-                "min": round(covered_min, 2),
-                "max": round(covered_max, 2)
-            },
-            "estimated_oop_range": {
-                "min": round(oop_min, 2),
-                "max": round(oop_max, 2)
-            },
-            "copay_percent": copay_percent,
-            "room_rent_cap": room_rent_cap_daily,
-            "sub_limit": procedure_sub_limit,
+            "treatment_cost": math_result["treatment_cost"],
+            "treatment_cost_range": math_result["treatment_cost"],
+            "applicable_sublimit": math_result["applicable_sublimit"],
+            "sub_limit": math_result["applicable_sublimit"],
+            "eligible_amount": math_result["eligible_amount"],
+            "eligible_amount_range": math_result["eligible_amount"],
+            "copay_percent": math_result["copay_percent"],
+            "copay_amount": math_result["copay_amount"],
+            "insurance_contribution": math_result["insurance_contribution"],
+            "estimated_coverage_range": math_result["insurance_contribution"],
+            "patient_payable": math_result["patient_payable"],
+            "estimated_oop_range": math_result["patient_payable"],
+            "room_rent_cap": matched.room_rent_cap_daily,
+            "room_proportionate_deduction_rate": matched.room_proportionate_deduction_rate,
+            "coverage_checks": coverage_check.to_dict(),
             "applied_rules": applied_rules,
+            "rules_applied": applied_rules,
             "citations": citations,
+            "evidence": citations,
             "confidence": confidence,
             "confidence_reason": confidence_reason,
             "data_source": data_source,
-            "data_type": "synthetic_demo"
+            "data_type": data_type
         }
+
+        logger.info(
+            f"[FIN-ENGINE] Computed: Cost ₹{cost_min:,.0f}-₹{cost_max:,.0f} | "
+            f"Coverage ₹{math_result['insurance_contribution']['min']:,.0f}-₹{math_result['insurance_contribution']['max']:,.0f} | "
+            f"OOP ₹{math_result['patient_payable']['min']:,.0f}-₹{math_result['patient_payable']['max']:,.0f}"
+        )
+
+        return result
