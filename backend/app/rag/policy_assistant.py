@@ -1,5 +1,6 @@
 import re
 import logging
+import json
 from typing import List, Dict, Any, Optional, Tuple
 from app.core.config import settings
 
@@ -14,7 +15,7 @@ class PolicyAssistantEngine:
     1. Grounded strictly on canonical Policy JSON and preserved source text chunks.
     2. Policy Isolation: Operations scoped exclusively to current policy_id.
     3. Concept & Intent Normalization: Maps natural-language variations (e.g., "pay any percentage",
-       "cost sharing", "out of pocket") to canonical rule categories (co-payment, sum insured, etc.).
+       "cost sharing", "out of pocket", "claim contribution") to canonical rule categories (co-payment, sum insured, etc.).
     4. Structured Rule Priority: Ranks canonical Policy JSON rules over raw text page snippets.
     5. Irrelevance Filtering & Thresholding: Rejects weak evidence, generic disclaimers, and ungrounded queries.
     6. Semantic Relationship Preservation (Cumulative Bonus, Dual Limits, Conditions).
@@ -23,11 +24,14 @@ class PolicyAssistantEngine:
 
     INTENT_MAP = {
         "copay": [
-            "co-payment", "copay", "co pay", "co-pay", "deductible", "cost sharing", 
-            "mandatory co-payment", "claim contribution", "pay percentage", "pay myself",
-            "pay out of pocket", "percentage of my claim", "share claim", "my share",
-            "patient share", "insured share", "contribution", "pay any percentage",
-            "percentage do i have to pay", "how much of the claim do i pay", "pay any percentage of my claim"
+            "co-payment", "copay", "co pay", "co-pay", "copayment", "deductible", "cost sharing", 
+            "cost-sharing", "mandatory co-payment", "claim contribution", "contribute to the claim",
+            "contribute to claim", "policyholder contribute", "insured contribute", "pay percentage",
+            "pay myself", "pay out of pocket", "percentage of my claim", "percentage of the claim",
+            "percentage do i have to pay", "percentage i have to pay", "how much of the claim do i pay",
+            "how much of the claim do i pay myself", "pay any percentage", "pay any percentage of my claim",
+            "share claim", "my share", "patient share", "insured share", "contribution", "cost sharing in my policy",
+            "is there any cost sharing", "claim cost sharing", "percentage paid by the insured", "user percentage"
         ],
         "sum_insured": [
             "sum insured", "maximum benefit", "coverage limit", "policy limit", 
@@ -40,7 +44,7 @@ class PolicyAssistantEngine:
             "room charge", "bed charge", "hospital room", "rent limit"
         ],
         "cataract": [
-            "cataract", "cataract surgery", "eye surgery", "lens replacement", "cataract limit"
+            "cataract", "cataract surgery", "eye surgery", "lens replacement", "cataract limit", "cataract coverage"
         ],
         "ambulance": [
             "ambulance", "road ambulance", "emergency transport"
@@ -58,11 +62,13 @@ class PolicyAssistantEngine:
         ],
         "pre_hospitalisation": [
             "pre-hospitalisation", "pre hospitalisation", "pre-hospital", "before admission",
-            "prior to hospital", "days before hospitalization", "before hospitalization"
+            "prior to hospital", "days before hospitalization", "before hospitalization",
+            "expenses are covered before hospitalization", "before admission expenses"
         ],
         "post_hospitalisation": [
             "post-hospitalisation", "post hospitalisation", "post-hospital", "after discharge",
-            "expenses after hospitalization", "after hospitalization"
+            "expenses after hospitalization", "after hospitalization",
+            "expenses are covered after hospitalization", "after discharge expenses"
         ],
         "restore": [
             "restore", "reinstatement", "refill", "automatic restoration", "restore benefit"
@@ -101,15 +107,19 @@ class PolicyAssistantEngine:
         r"for demonstration",
         r"must not be used to buy, claim or compare",
         r"disclaimer:",
-        r"terms and conditions apply"
+        r"terms and conditions apply",
+        r"sample document for testing",
+        r"this is a sample"
     ]
 
     GENERIC_STOP_WORDS = {
         "what", "when", "does", "have", "with", "from", "about", "your", "this",
         "policy", "cover", "covered", "coverage", "limit", "period", "show", "tell",
         "under", "much", "many", "rate", "cost", "type", "rule", "item", "part",
-        "claim", "contract", "insurance", "document", "page", "myself", "any", "how",
-        "do", "i", "to", "pay", "of", "my", "the", "a", "an", "is", "are", "there"
+        "claim", "claims", "contract", "contracts", "insurance", "document", "documents",
+        "page", "pages", "myself", "any", "how", "do", "i", "to", "pay", "of", "my",
+        "the", "a", "an", "is", "are", "there", "disclaimer", "disclaimers", "terms",
+        "conditions", "apply", "sample", "illustration", "expenses", "expense"
     }
 
     @classmethod
@@ -168,16 +178,25 @@ class PolicyAssistantEngine:
                     matched_intents.add(intent)
                     break
 
-        # 2. Dynamic combination rules
+        # 2. Semantic & combination rules
         # Co-payment / Cost-sharing combinations:
-        if any(w in q_lower for w in ["pay", "paid", "paying", "contribution", "share"]):
-            if any(w in q_lower for w in ["percentage", "claim", "myself", "out of pocket", "how much", "amount", "cost"]):
+        if any(w in q_lower for w in ["pay", "paid", "paying", "contribution", "contribute", "share", "cost sharing", "cost-sharing", "co-pay", "copay", "co-payment", "copayment", "co pay"]):
+            if any(w in q_lower for w in ["percentage", "claim", "myself", "out of pocket", "how much", "amount", "cost", "portion", "policyholder", "insured", "share"]):
                 matched_intents.add("copay")
 
+        if any(w in q_lower for w in ["copay", "co-pay", "co pay", "copayment", "co-payment", "cost sharing", "cost-sharing", "deductible"]):
+            matched_intents.add("copay")
+
         # Sum Insured combinations:
-        if any(w in q_lower for w in ["coverage", "cover", "insured"]):
-            if any(w in q_lower for w in ["how much", "total", "overall", "maximum", "amount"]):
+        if any(w in q_lower for w in ["coverage", "cover", "insured", "sum"]):
+            if any(w in q_lower for w in ["how much", "total", "overall", "maximum", "amount", "sum", "insured"]):
                 matched_intents.add("sum_insured")
+
+        # Cataract combinations:
+        if "cataract" in q_lower:
+            matched_intents.add("cataract")
+            if any(w in q_lower for w in ["waiting", "period", "months", "years", "time", "delay"]):
+                matched_intents.add("waiting_period")
 
         # Pre/Post hospitalisation combinations:
         if "hospitalization" in q_lower or "hospitalisation" in q_lower or "hospital" in q_lower:
@@ -228,11 +247,6 @@ class PolicyAssistantEngine:
         matched_snippets = []
         rejected_rules = []
 
-        logger.debug("--- SPASTH POLICY ASSISTANT RETRIEVAL DEBUG LOG ---")
-        logger.debug("QUESTION: %s", query)
-        logger.debug("EFFECTIVE QUERY: %s", effective_query)
-        logger.debug("NORMALIZED INTENTS: %s", query_intents)
-
         # 1. Match Policy Metadata queries
         for meta_key, meta_val in metadata.items():
             if meta_val and meta_key.replace("_", " ") in q_lower:
@@ -243,22 +257,37 @@ class PolicyAssistantEngine:
         for rule in rules:
             score = 0
             rule_id = (rule.get("rule_id") or rule.get("rule_key") or "").lower()
-            name = (rule.get("name") or rule.get("label") or "").lower()
+            name = (rule.get("name") or rule.get("label") or rule.get("rule_name") or "").lower()
             category = (rule.get("category") or rule.get("rule_type") or "").lower()
             source_text = (rule.get("source_text") or "").lower()
             qualifiers = str(rule.get("qualifiers") or "").lower()
             conditions = str(rule.get("conditions") or "").lower()
 
-            # A. Intent-based Concept Matching (+60 points)
+            # A. Intent-based Concept Matching (+70 to +80 points)
             for intent in query_intents:
-                if intent == "copay" and ("copay" in rule_id or "copay" in category or "co-payment" in name or "co_payment" in rule_id or "copay" in name):
-                    score += 65
+                if intent == "copay":
+                    if any(k in rule_id or k in category or k in name or k in source_text for k in ["copay", "co_payment", "co-payment", "copayment", "co pay", "cost_sharing", "cost sharing", "deductible", "claim_contribution"]):
+                        score += 75
+                elif intent == "sum_insured":
+                    if any(k in rule_id or k in category or k in name or k in source_text for k in ["sum_insured", "sum insured", "coverage_limit", "maximum_benefit", "insured_amount"]):
+                        score += 75
+                elif intent == "cataract":
+                    if "cataract" in rule_id or "cataract" in category or "cataract" in name or "cataract" in source_text or "cataract" in qualifiers:
+                        score += 70
+                elif intent == "waiting_period":
+                    if any(k in rule_id or k in category or k in name or k in source_text for k in ["waiting", "ped", "pre-existing", "waiting_period"]):
+                        score += 70
                 elif intent in rule_id or intent in category or intent in name:
-                    score += 60
+                    score += 65
                 elif any(kw in source_text or kw in qualifiers for kw in cls.INTENT_MAP.get(intent, [])):
-                    score += 40
+                    score += 45
 
-            # B. Specific Query Terms Matching (+15 to +25 points)
+            # Compound Intent Boost (e.g., Cataract + Waiting Period)
+            if "waiting_period" in query_intents and "cataract" in query_intents:
+                if ("waiting" in rule_id or "waiting" in category or "waiting" in name or "waiting" in source_text) and ("cataract" in source_text or "cataract" in qualifiers or "cataract" in name):
+                    score += 35
+
+            # B. Non-generic Specific Query Terms Matching (+15 to +25 points)
             query_words = [w for w in q_lower.split() if len(w) > 2 and w not in cls.GENERIC_STOP_WORDS]
             for qw in query_words:
                 if qw in rule_id or qw in name:
@@ -270,37 +299,35 @@ class PolicyAssistantEngine:
                 elif qw in qualifiers or qw in conditions:
                     score += 15
 
-            if score >= 25:
+            if score >= 30:
                 scored_rules.append((score, rule))
             else:
-                rejected_rules.append((score, rule.get("name") or rule.get("rule_id"), "Below relevance threshold 25"))
+                rejected_rules.append((rule.get("name") or rule.get("rule_id"), f"Below relevance threshold 30 (score={score})"))
 
         # Sort rules by score descending
         scored_rules.sort(key=lambda x: x[0], reverse=True)
         matched_rules = [r for score, r in scored_rules[:5]]
-
-        for sc, r in scored_rules[:5]:
-            logger.debug("RETRIEVED RULE: %s (Score: %d, Page: %s)", r.get("name"), sc, r.get("page"))
 
         # 3. Fallback page snippet matching (Strict threshold + disclaimer filter)
         if not matched_rules and not matched_metadata and pages:
             search_words = [w for w in q_lower.split() if len(w) > 3 and w not in cls.GENERIC_STOP_WORDS]
             if search_words:
                 for page in pages:
+                    p_num = page.get("page_number", 1)
                     content = page.get("content", "")
                     for line in content.split("\n"):
                         line_clean = line.strip()
                         if len(line_clean) > 15:
                             # Reject disclaimers
-                            if cls.is_disclaimer_snippet(line_clean):
-                                rejected_rules.append((0, line_clean, "Filtered out as disclaimer pattern"))
+                            if cls.is_disclaimer_snippet(line_clean) or (p_num == 1 and any(w in line_clean.lower() for w in ["disclaimer", "not a real insurance", "sample"])):
+                                rejected_rules.append((line_clean[:50], "Filtered out as disclaimer pattern"))
                                 continue
                             
                             # Score line snippet
                             snip_score = sum(30 for w in search_words if re.search(r'\b' + re.escape(w) + r'\b', line_clean.lower()))
-                            if snip_score >= 50:
+                            if snip_score >= 60:
                                 matched_snippets.append({
-                                    "page": page.get("page_number", 1),
+                                    "page": p_num,
                                     "clause": "Policy Document Text",
                                     "source_text": line_clean,
                                     "score": snip_score
@@ -310,7 +337,24 @@ class PolicyAssistantEngine:
                     if len(matched_snippets) >= 3:
                         break
 
+        # Log Debug output
+        logger.debug("==================================================")
+        logger.debug("SPASTH POLICY ASSISTANT RETRIEVAL DEBUG LOG")
+        logger.debug("==================================================")
+        logger.debug("QUESTION: %s", query)
+        logger.debug("EFFECTIVE QUERY: %s", effective_query)
+        logger.debug("INTERPRETED INTENT: %s", query_intents)
+        logger.debug("--------------------------------------------------")
+        logger.debug("TOP RETRIEVED RULES:")
+        for idx, (sc, r) in enumerate(scored_rules[:5], start=1):
+            logger.debug("  %d. rule_id: %s | rule_name: %s | category: %s | page: %s | score: %d",
+                         idx, r.get("rule_id") or r.get("rule_key"), r.get("name"), r.get("category"), r.get("page"), sc)
+        logger.debug("--------------------------------------------------")
         logger.debug("REJECTED RESULTS COUNT: %d", len(rejected_rules))
+        for r_name, reason in rejected_rules[:5]:
+            logger.debug("  - %s: %s", r_name, reason)
+        logger.debug("--------------------------------------------------")
+        logger.debug("FINAL SELECTED EVIDENCE: %d rules, %d snippets", len(matched_rules), len(matched_snippets))
 
         return {
             "query": query,
@@ -332,12 +376,32 @@ class PolicyAssistantEngine:
     ) -> Dict[str, Any]:
         """
         Generates grounded answer using LLM (if available) or deterministic fallback.
+        Validates evidence relevance strictly before passing to LLM or generating answer.
         """
         matched_rules = retrieval_data["matched_rules"]
         matched_metadata = retrieval_data["matched_metadata"]
         matched_snippets = retrieval_data["matched_snippets"]
         effective_query = retrieval_data["effective_query"]
         metadata = retrieval_data["metadata"]
+
+        # Reject weak/empty evidence immediately (Grounding Validation)
+        if not matched_rules and not matched_metadata and not matched_snippets:
+            clean_q = query.replace("Is ", "").replace("does ", "").replace("covered", "").replace("what is ", "").strip()
+            logger.debug("FINAL GROUNDING STATUS: NOT_FOUND")
+            logger.debug("==================================================")
+            return {
+                "policy_id": policy_id,
+                "query": query,
+                "answer": (
+                    f"I could not find a specific provision for '{query}' in the uploaded policy document. "
+                    f"Standard policy terms apply, but specific coverage for '{clean_q}' is not explicitly defined in the indexed clauses."
+                ),
+                "citations": [],
+                "confidence": 0.20,
+                "grounding_status": "NOT_FOUND",
+                "rules_used": [],
+                "missing_information": [query]
+            }
 
         conflict_rules = [r for r in matched_rules if r.get("status") == "CONFLICT"]
 
@@ -383,7 +447,7 @@ STRICT INSTRUCTIONS:
 3. Preserve all semantic relationships (e.g. cumulative bonus increment vs max cap, sublimit caps vs SI percentage, copay conditions).
 4. If status is CONFLICT, explicitly state that conflicting values exist in the policy.
 5. If status is NEEDS_REVIEW, mention that the rule requires manual verification.
-6. If evidence is missing or not found, explicitly state that information is NOT AVAILABLE in the uploaded policy.
+6. If evidence is missing or not found, explicitly state that information is NOT AVAILABLE in the uploaded policy and set grounding_status to "NOT_FOUND".
 7. Always provide structured JSON with keys:
    - "answer": string
    - "citations": list of objects (page, clause, rule, source_text, bbox)
@@ -399,7 +463,6 @@ STRICT INSTRUCTIONS:
                 if resp_text.endswith("```"):
                     resp_text = resp_text[:-3]
 
-                import json
                 parsed = json.loads(resp_text.strip())
                 return {
                     "policy_id": policy_id,
@@ -459,17 +522,43 @@ STRICT INSTRUCTIONS:
                 src = r.get("source_text") or ""
                 bbox = r.get("bbox")
 
+                r_id = (r.get("rule_id") or "").lower()
+                r_key = (r.get("rule_key") or "").lower()
+                r_cat = (r.get("category") or r.get("rule_type") or "").lower()
+
                 # Handle Co-Payment Rule specifically
-                elif any(k in (r.get("rule_id") or "").lower() or k in (r.get("rule_key") or "").lower() or k in r_name.lower() or k in (r.get("category") or "").lower() for k in ["copay", "co_payment", "co-payment", "copayment"]):
+                if any(k in r_id or k in r_key or k in r_name.lower() or k in r_cat for k in ["copay", "co_payment", "co-payment", "copayment", "cost_sharing", "cost sharing"]):
                     val = r.get("value", 0.0)
                     fmt = r.get("formatted_value") or (f"{int(val)}%" if val > 0 else "0% (Nil)")
                     raw_quals = r.get('qualifiers')
                     quals_str = ", ".join(raw_quals) if isinstance(raw_quals, list) else str(raw_quals) if raw_quals else ""
                     quals = f" ({quals_str})" if quals_str else ""
-                    if val == 0.0 or "nil" in fmt.lower() or "0%" in fmt:
+                    if val == 0.0 or "nil" in fmt.lower() or "0%" in fmt or "zero" in fmt.lower():
                         parts.append(f"Under your policy ({clause}, Page {page}), the mandatory co-payment is {fmt}{quals}. There is no cost-sharing co-payment deduction required on admissible claims, and eligible hospitalisation expenses are payable up to the Sum Insured.")
                     else:
                         parts.append(f"Under your policy ({clause}, Page {page}), a mandatory co-payment of {fmt}{quals} applies to admissible claims. The policyholder is responsible for paying this percentage out of pocket.")
+
+                # Handle Cataract Surgery
+                elif "cataract" in r_name.lower() or "cataract" in r_key:
+                    val_str = r.get("formatted_value") or (f"₹{int(r['value']):,}" if isinstance(r.get("value"), (int, float)) else str(r.get("value")))
+                    quals = f" ({r.get('qualifiers')})" if r.get("qualifiers") else ""
+                    parts.append(f"Under your policy ({clause}, Page {page}), cataract surgery coverage is capped at {val_str}{quals}.")
+
+                # Handle Waiting Period rules
+                elif "waiting" in r_cat or "waiting" in r_key or "waiting" in r_name.lower():
+                    val_str = r.get("formatted_value") or str(r.get("value"))
+                    quals = f" ({r.get('qualifiers')})" if r.get("qualifiers") else ""
+                    parts.append(f"Under your policy ({clause}, Page {page}), {r_name} is {val_str}{quals}.")
+
+                # Handle Pre-Hospitalisation
+                elif "pre_hospital" in r_key or "pre-hospital" in r_name.lower() or "pre hospital" in r_name.lower():
+                    val_str = r.get("formatted_value") or f"{int(r['value'])} days"
+                    parts.append(f"Under your policy ({clause}, Page {page}), pre-hospitalisation expenses are covered for {val_str} prior to admission.")
+
+                # Handle Post-Hospitalisation
+                elif "post_hospital" in r_key or "post-hospital" in r_name.lower() or "post hospital" in r_name.lower():
+                    val_str = r.get("formatted_value") or f"{int(r['value'])} days"
+                    parts.append(f"Under your policy ({clause}, Page {page}), post-hospitalisation expenses are covered for {val_str} after discharge.")
 
                 # Handle NEEDS_REVIEW
                 elif r.get("status") == "NEEDS_REVIEW":
@@ -557,6 +646,7 @@ STRICT INSTRUCTIONS:
 
         logger.debug("FINAL GROUNDING STATUS: %s", grounding_status)
         logger.debug("FINAL ANSWER: %s", answer)
+        logger.debug("==================================================")
 
         return {
             "policy_id": policy_id,
