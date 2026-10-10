@@ -361,6 +361,28 @@ class MathEngine:
             "reason": "100% auditable accounting reconciliation invariant verified"
         })
 
+        # Independent Validation Layer (Requirement 12 & 13)
+        from app.calculation.validator import CalculationValidator
+        norm_inputs = {
+            "treatment_cost": cost_d,
+            "quantity": qty_d,
+            "non_covered_expense": non_cov_d,
+            "sublimit": sublimit_d,
+            "deductible": deduct_d,
+            "copay_percent": copay_d,
+            "sum_insured": effective_limit,
+            "room_deduction": room_deduction
+        }
+        validation_output = CalculationValidator.validate_calculation(
+            math_engine_result={
+                "total_expense": total_expense,
+                "insurer_payable": insurer_payable,
+                "customer_payable": customer_payable,
+                "remaining_sum_insured": new_rem_si
+            },
+            normalized_inputs=norm_inputs
+        )
+
         return {
             "status": "SUCCESS",
             "currency": CURRENCY_CODE,
@@ -394,7 +416,14 @@ class MathEngine:
                 "co_payment": round_money(copay_amount),
                 "sum_insured_excess": round_money(exceeded_si)
             },
-            "calculation_trace": trace
+            "calculation_trace": trace,
+            "validation": {
+                "independent_check": validation_output["independent_check"],
+                "reconciled": validation_output["reconciled"],
+                "status": validation_output["status"],
+                "expected_values": validation_output.get("expected_values"),
+                "discrepancies": validation_output.get("discrepancies", [])
+            }
         }
 
     @staticmethod

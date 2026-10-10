@@ -247,9 +247,21 @@ export default function EstimationResultDashboard({ estimate, onRecalculate, loa
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#F7F7F8] text-[#003339] border border-[#E2E8E8] uppercase tracking-wide">
-                Scenario: {estimate.procedure || estimate.treatment?.procedure_name} • {estimate.city || estimate.treatment?.city}
+                Scenario: {estimate.procedure || estimate.treatment?.procedure_name || estimate.treatment} • {estimate.city || estimate.treatment?.city}
               </span>
               {getConfidenceBadge(estimate.confidence)}
+              {estimate.validation?.status === 'CALCULATION_VALIDATED' && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                  CALCULATION VALIDATED
+                </span>
+              )}
+              {estimate.validation?.status === 'CALCULATION_MISMATCH' && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-800 border border-red-300">
+                  <AlertCircle className="w-3.5 h-3.5 mr-1 text-red-600" />
+                  CALCULATION MISMATCH
+                </span>
+              )}
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-[#003339] tracking-tight">
               Coverage &amp; Financial Estimation Result

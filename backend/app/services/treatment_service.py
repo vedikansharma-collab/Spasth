@@ -82,17 +82,19 @@ class TreatmentService:
                     return item.get("canonical_name") or item.get("procedure")
 
         # 5. Fuzzy substring keyword fallback
+        import re
+        clean_words = set(re.findall(r'\b\w+\b', clean_name))
         for item in benchmarks:
             canon = (item.get("canonical_name") or item.get("procedure") or "").lower()
             if "append" in clean_name and "append" in canon:
                 return item.get("canonical_name") or item.get("procedure")
             if "cataract" in clean_name and "cataract" in canon:
                 return item.get("canonical_name") or item.get("procedure")
-            if ("knee" in clean_name or "tkr" in clean_name) and "knee" in canon:
+            if ("knee" in clean_name or "tkr" in clean_words) and "knee" in canon:
                 return item.get("canonical_name") or item.get("procedure")
             if ("c-section" in clean_name or "cesarean" in clean_name or "caesarean" in clean_name) and "c-section" in canon:
                 return item.get("canonical_name") or item.get("procedure")
-            if ("angioplasty" in clean_name or "stent" in clean_name or "ptca" in clean_name) and "angioplasty" in canon:
+            if ("angioplasty" in clean_name or "stent" in clean_words or "ptca" in clean_words) and "angioplasty" in canon:
                 return item.get("canonical_name") or item.get("procedure")
 
         return None
