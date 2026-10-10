@@ -96,11 +96,15 @@ class CoverageChecker:
         for wp_rule in matched_rules.waiting_period_rules:
             source_text = str(wp_rule.get("source_text") or "").lower()
             rule_key = str(wp_rule.get("rule_key") or "").lower()
-            val_str = str(wp_rule.get("value") or "").lower()
+            val = wp_rule.get("value")
+            val_str = str(val or "").lower()
             page = wp_rule.get("page")
             clause = wp_rule.get("clause") or "N/A"
 
-            months_required = cls._parse_months_from_rule(source_text, val_str)
+            if isinstance(val, (int, float)) and val > 0:
+                months_required = int(val)
+            else:
+                months_required = cls._parse_months_from_rule(source_text, val_str)
 
             # Pre-Existing Disease (PED)
             if is_ped and ("ped" in source_text or "pre-existing" in source_text or "pre existing" in source_text):
@@ -133,7 +137,40 @@ class CoverageChecker:
 
             # Disease-Specific Waiting Period
             proc_lower = procedure.lower()
-            if proc_lower in source_text or proc_lower in rule_key:
+            keywords = [proc_lower]
+            if "cataract" in proc_lower:
+                keywords.extend(["cataract", "eye ailments", "eye"])
+            elif "knee" in proc_lower or "tkr" in proc_lower:
+                keywords.extend(["knee", "joint replacement", "arthroplasty", "osteoarthritis"])
+            elif "hip" in proc_lower or "thr" in proc_lower:
+                keywords.extend(["hip", "joint replacement", "arthroplasty", "osteoarthritis"])
+            elif "append" in proc_lower:
+                keywords.extend(["append", "appendix"])
+            elif "hernia" in proc_lower:
+                keywords.extend(["hernia", "hernioplasty"])
+            elif "cholecyst" in proc_lower or "gall" in proc_lower:
+                keywords.extend(["cholecystectomy", "gall bladder", "gallstone", "calculus"])
+            elif "kidney stone" in proc_lower or "calculus" in proc_lower:
+                keywords.extend(["kidney stone", "calculus", "lithotripsy", "urinary stone"])
+            elif "hysterect" in proc_lower:
+                keywords.extend(["hysterectomy", "fibroids", "uterus"])
+            elif "hemorrhoid" in proc_lower or "piles" in proc_lower:
+                keywords.extend(["piles", "fissure", "fistula", "hemorrhoid"])
+            elif "tonsil" in proc_lower:
+                keywords.extend(["tonsil", "ent surgical disorders", "sinusitis"])
+            elif "tympano" in proc_lower:
+                keywords.extend(["tympanoplasty", "ear surgery", "ent surgical disorders"])
+            elif "septo" in proc_lower:
+                keywords.extend(["septoplasty", "deviated septum", "ent surgical disorders"])
+            elif "c-section" in proc_lower or "cesarean" in proc_lower or "caesarean" in proc_lower:
+                keywords.extend(["c-section", "caesarean", "cesarean", "maternity"])
+            elif "normal delivery" in proc_lower:
+                keywords.extend(["normal delivery", "maternity", "childbirth"])
+            elif "angio" in proc_lower or "stent" in proc_lower:
+                keywords.extend(["angioplasty", "ptca", "cardiac stent"])
+
+            is_proc_match = any(kw in source_text or kw in rule_key for kw in keywords)
+            if is_proc_match:
                 if policy_tenure_months is not None and months_required is not None:
                     if policy_tenure_months < months_required:
                         reason = (

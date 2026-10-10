@@ -58,8 +58,50 @@ class EstimateResponse(BaseModel):
     rules_applied: Optional[List[AppliedRuleSchema]] = None
     evidence: Optional[List[CitationSchema]] = None
     coverage_checks: Optional[Dict[str, Any]] = None
+    calculation_trace: Optional[List[Dict[str, Any]]] = None
+    customer_payable_breakdown: Optional[Dict[str, Any]] = None
+    currency: Optional[str] = "INR"
 
 class TreatmentsResponse(BaseModel):
     procedures: List[str]
     cities: List[str]
     room_categories: List[str]
+    benchmarks: Optional[List[Dict[str, Any]]] = None
+
+class ClaimCalculationRequest(BaseModel):
+    policy_id: Optional[str] = None
+    treatment_id: Optional[str] = None
+    procedure_name: Optional[str] = None
+    treatment_cost: float
+    quantity: int = 1
+    non_covered_expense: float = 0.0
+    copay_percent: float = 0.0
+    deductible: float = 0.0
+    treatment_sublimit: Optional[float] = None
+    sum_insured: Optional[float] = None
+    remaining_sum_insured: Optional[float] = None
+    room_penalty_ratio: float = 0.0
+    city: Optional[str] = None
+
+class ClaimCalculationResponse(BaseModel):
+    status: str
+    currency: str = "INR"
+    treatment: Dict[str, Any]
+    total_expense: float
+    non_covered_expense: float
+    eligible_expense: float
+    sublimit: Optional[float] = None
+    sublimit_adjustment: float = 0.0
+    room_penalty_ratio: float = 0.0
+    room_adjustment: float = 0.0
+    deductible: float = 0.0
+    co_payment_percentage: float = 0.0
+    co_payment_amount: float = 0.0
+    sum_insured: Optional[float] = None
+    previous_remaining_sum_insured: Optional[float] = None
+    new_remaining_sum_insured: Optional[float] = None
+    insurer_payable: float
+    customer_payable: float
+    customer_payable_breakdown: Dict[str, Any]
+    calculation_trace: List[Dict[str, Any]]
+

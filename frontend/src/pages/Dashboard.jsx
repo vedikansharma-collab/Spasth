@@ -6,7 +6,7 @@ import PolicyAssistantView from '../components/PolicyAssistantView';
 import CostEstimatorView from '../components/CostEstimatorView';
 import PolicyDocumentView from '../components/PolicyDocumentView';
 import PolicyUpload from '../components/PolicyUpload';
-import { calculateEstimate, getPolicyDetail, getPolicies } from '../services/api';
+import { calculateClaim, getPolicyDetail, getPolicies } from '../services/api';
 import { X, UploadCloud } from 'lucide-react';
 
 export default function Dashboard() {
@@ -90,14 +90,14 @@ export default function Dashboard() {
     setEstimating(true);
     setLastScenario(scenarioPayload);
     try {
-      const result = await calculateEstimate({
+      const result = await calculateClaim({
         ...scenarioPayload,
         policy_id: activePolicyId
       });
       setEstimateResult(result);
     } catch (err) {
       console.error('Error calculating estimate:', err);
-      alert(err.response?.data?.detail || 'Failed to calculate out-of-pocket estimate.');
+      alert(err.response?.data?.detail || err.response?.data?.message || 'Failed to calculate out-of-pocket estimate.');
     } finally {
       setEstimating(false);
     }

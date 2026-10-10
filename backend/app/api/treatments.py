@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.database.db import get_db
+from app.services.treatment_service import TreatmentService
 from app.schemas.estimate import TreatmentsResponse
 
 router = APIRouter(prefix="/treatments", tags=["Treatments"])
@@ -8,18 +8,23 @@ router = APIRouter(prefix="/treatments", tags=["Treatments"])
 def get_treatment_metadata():
     """
     GET /api/treatments
-    Fetches available medical procedures, cities, and room categories in the cost dataset.
+    Fetches available canonical medical procedures, cities, room categories, and benchmark dataset.
     """
-    with get_db() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT DISTINCT procedure_name FROM treatment_costs ORDER BY procedure_name ASC;")
-        procedures = [row["procedure_name"] for row in cursor.fetchall()]
-
-        cursor.execute("SELECT DISTINCT city FROM treatment_costs ORDER BY city ASC;")
-        cities = [row["city"] for row in cursor.fetchall()]
+    benchmarks = TreatmentService._load_benchmarks()
+    procedures = sorted(list(set(
+        b.get("canonical_name") or b.get("procedure")
+        for b in benchmarks
+        if (b.get("canonical_name") or b.get("procedure"))
+    )))
+    cities = sorted(list(set(
+        b.get("city")
+        for b in benchmarks
+        if b.get("city")
+    )))
 
     return TreatmentsResponse(
         procedures=procedures if procedures else ["Appendectomy", "Cataract Surgery", "Knee Replacement", "C-Section", "Angioplasty"],
         cities=cities if cities else ["Pune", "Mumbai", "Nagpur"],
-        room_categories=["Standard", "Deluxe"]
+        room_categories=["Standard", "Deluxe"],
+        benchmarks=benchmarks
     )

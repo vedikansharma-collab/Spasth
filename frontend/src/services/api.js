@@ -57,6 +57,11 @@ export const calculateTreatment = async (payload) => {
   return response.data;
 };
 
+export const calculateClaim = async (payload) => {
+  const response = await api.post('/estimate/calculate-claim', payload);
+  return response.data;
+};
+
 export const askPolicy = async (policyId, query) => {
   const response = await api.post(`/policies/${policyId}/ask`, { query });
   return response.data;

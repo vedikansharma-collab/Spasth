@@ -21,7 +21,10 @@ class MatchedRules:
     
     procedure_sublimit: Optional[float] = None
     sublimit_rule: Optional[Dict[str, Any]] = None
-    
+
+    deductible: float = 0.0
+    deductible_rule: Optional[Dict[str, Any]] = None
+
     room_rent_cap_daily: Optional[float] = None
     room_allowed_category: Optional[str] = None
     room_proportionate_deduction_rate: Optional[float] = None  # None if not defined in policy
@@ -60,17 +63,47 @@ class TreatmentRuleMatcher:
 
         proc_lower = procedure.lower()
         proc_keywords = [proc_lower]
-        # Common procedure synonym aliases for matching
+        # Clinical & vernacular procedure keywords for all 20 procedures
         if "cataract" in proc_lower:
-            proc_keywords.extend(["cataract", "eye surgery", "ophthalm"])
+            proc_keywords.extend(["cataract", "eye surgery", "ophthalm", "eye ailments"])
         elif "append" in proc_lower:
             proc_keywords.extend(["appendectomy", "appendix"])
         elif "knee" in proc_lower or "tkr" in proc_lower:
-            proc_keywords.extend(["knee replacement", "joint replacement", "arthroplasty"])
+            proc_keywords.extend(["knee replacement", "joint replacement", "arthroplasty", "osteoarthritis"])
         elif "c-section" in proc_lower or "cesarean" in proc_lower or "caesarean" in proc_lower:
-            proc_keywords.extend(["c-section", "caesarean", "cesarean", "maternity"])
+            proc_keywords.extend(["c-section", "caesarean", "cesarean", "maternity", "childbirth", "complicated deliveries"])
+        elif "normal delivery" in proc_lower or "delivery" in proc_lower:
+            proc_keywords.extend(["normal delivery", "maternity", "childbirth", "caesarean", "delivery"])
         elif "angio" in proc_lower or "stent" in proc_lower:
-            proc_keywords.extend(["angioplasty", "ptca", "cardiac stent"])
+            proc_keywords.extend(["angioplasty", "ptca", "cardiac stent", "coronary"])
+        elif "hernia" in proc_lower:
+            proc_keywords.extend(["hernia", "hernioplasty", "inguinal"])
+        elif "cholecyst" in proc_lower or "gall" in proc_lower:
+            proc_keywords.extend(["cholecystectomy", "gall bladder", "gallstone", "calculus"])
+        elif "kidney stone" in proc_lower or "calculus" in proc_lower:
+            proc_keywords.extend(["kidney stone", "calculus", "lithotripsy", "urinary stone"])
+        elif "hysterect" in proc_lower:
+            proc_keywords.extend(["hysterectomy", "fibroids", "uterus"])
+        elif "hip" in proc_lower or "thr" in proc_lower:
+            proc_keywords.extend(["hip replacement", "joint replacement", "arthroplasty", "osteoarthritis"])
+        elif "cabg" in proc_lower or "bypass" in proc_lower:
+            proc_keywords.extend(["cabg", "coronary artery bypass", "bypass graft", "heart surgery"])
+        elif "tonsil" in proc_lower:
+            proc_keywords.extend(["tonsillectomy", "tonsil", "ent surgical disorders", "sinusitis"])
+        elif "hemorrhoid" in proc_lower or "piles" in proc_lower:
+            proc_keywords.extend(["hemorrhoidectomy", "hemorrhoids", "piles", "fissure", "fistula"])
+        elif "dialysis" in proc_lower:
+            proc_keywords.extend(["dialysis", "hemodialysis", "renal failure", "kidney failure"])
+        elif "chemo" in proc_lower:
+            proc_keywords.extend(["chemotherapy", "cancer", "oncology"])
+        elif "tympano" in proc_lower:
+            proc_keywords.extend(["tympanoplasty", "ear surgery", "ent surgical disorders"])
+        elif "septo" in proc_lower:
+            proc_keywords.extend(["septoplasty", "deviated septum", "nasal septum", "ent surgical disorders"])
+        elif "arthro" in proc_lower:
+            proc_keywords.extend(["arthroscopy", "joint endoscopy", "meniscus", "joint"])
+        elif "thyroid" in proc_lower:
+            proc_keywords.extend(["thyroidectomy", "thyroid", "goiter"])
 
         for rule in validated_rules:
             rule_type = rule.get("rule_type")
@@ -121,7 +154,20 @@ class TreatmentRuleMatcher:
                         "source_text": rule.get("source_text", "")
                     })
 
-            # 4. Room Rent Limits & Rules
+            # 4. Deductible
+            elif rule_type == "deductible":
+                if isinstance(val, (int, float)):
+                    matched.deductible = float(val)
+                    matched.deductible_rule = rule
+                    matched.matched_citations.append({
+                        "rule": "Policy Deductible",
+                        "details": f"INR {val:,.2f} Deductible",
+                        "page": page,
+                        "clause": clause,
+                        "source_text": rule.get("source_text", "")
+                    })
+
+            # 5. Room Rent Limits & Rules
             elif rule_type == "room_rent_limit":
                 matched.room_rule = rule
                 if isinstance(val, (int, float)) and val > 0:

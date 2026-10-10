@@ -90,6 +90,7 @@ export default function CostEstimatorView({
 
         <TreatmentScenarioForm
           policyId={activePolicyId}
+          activePolicy={activePolicy}
           onCalculate={onCalculate}
           loading={estimating}
         />

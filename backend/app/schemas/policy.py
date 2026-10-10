@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 
 class PolicyPageSchema(BaseModel):
     page_number: int
@@ -55,7 +55,7 @@ class PolicyCitationSchema(BaseModel):
     section: Optional[str] = None
     rule: Optional[str] = "Policy Term"
     source_text: str
-    bbox: Optional[List[float]] = None
+    bbox: Optional[Union[List[float], Dict[str, Any]]] = None
     rule_id: Optional[str] = None
 
 class PolicyAskRequest(BaseModel):

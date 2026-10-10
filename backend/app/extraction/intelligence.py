@@ -483,6 +483,70 @@ RETURN A VALID JSON ARRAY OF OBJECTS IN THIS SCHEMA:
                         })
                         page_extracted_keys.add("cumulative_bonus")
 
+                    # 17. Standard IRDAI Exclusions in Table (Phase 7 & 10)
+                    if "excl18" in row_lower or ("maternity" in row_lower and any(w in row_lower for w in ["childbirth", "caesarean", "cesarean", "delivery", "exclusion"])):
+                        candidates.append({
+                            "rule_type": "exclusion",
+                            "rule_key": "maternity_exclusion",
+                            "label": "Maternity & Caesarean Sections",
+                            "value": "Excluded",
+                            "formatted_value": "Excluded (Childbirth & Caesarean Sections)",
+                            "unit": "clause",
+                            "qualifiers": "childbirth, caesarean sections, and complicated deliveries",
+                            "page": p_num,
+                            "clause": "Code-Excl18 Maternity",
+                            "source_text": row_str[:500],
+                            "confidence": "HIGH"
+                        })
+                        page_extracted_keys.add("maternity_exclusion")
+
+                    if "excl08" in row_lower or ("cosmetic" in row_lower and "plastic surgery" in row_lower):
+                        candidates.append({
+                            "rule_type": "exclusion",
+                            "rule_key": "cosmetic_exclusion",
+                            "label": "Cosmetic or Plastic Surgery",
+                            "value": "Excluded",
+                            "formatted_value": "Excluded",
+                            "unit": "clause",
+                            "qualifiers": "cosmetic or plastic surgery",
+                            "page": p_num,
+                            "clause": "Code-Excl08 Cosmetic",
+                            "source_text": row_str[:500],
+                            "confidence": "HIGH"
+                        })
+                        page_extracted_keys.add("cosmetic_exclusion")
+
+                    if "excl06" in row_lower or (("obesity" in row_lower or "bariatric" in row_lower) and any(w in row_lower for w in ["exclusion", "weight control", "surgery"])):
+                        candidates.append({
+                            "rule_type": "exclusion",
+                            "rule_key": "obesity_exclusion",
+                            "label": "Obesity / Bariatric Surgery",
+                            "value": "Excluded",
+                            "formatted_value": "Excluded unless criteria met",
+                            "unit": "clause",
+                            "qualifiers": "bariatric and obesity surgery",
+                            "page": p_num,
+                            "clause": "Code-Excl06 Obesity",
+                            "source_text": row_str[:500],
+                            "confidence": "HIGH"
+                        })
+                        page_extracted_keys.add("obesity_exclusion")
+
+                    if "excl17" in row_lower or ("sterility" in row_lower or "infertility" in row_lower):
+                        candidates.append({
+                            "rule_type": "exclusion",
+                            "rule_key": "infertility_exclusion",
+                            "label": "Sterility and Infertility",
+                            "value": "Excluded",
+                            "formatted_value": "Excluded",
+                            "unit": "clause",
+                            "qualifiers": "sterility, assisted reproduction, IVF",
+                            "page": p_num,
+                            "clause": "Code-Excl17 Infertility",
+                            "source_text": row_str[:500],
+                            "confidence": "HIGH"
+                        })
+                        page_extracted_keys.add("infertility_exclusion")
 
             # -----------------------------------------------------------------
             # PASS 2: BLOCK & PARAGRAPH TEXT EXTRACTION (Phase 4, 6, 8, 9, 10)
@@ -839,6 +903,87 @@ RETURN A VALID JSON ARRAY OF OBJECTS IN THIS SCHEMA:
                             "confidence": "HIGH"
                         })
 
+                # 18. Standard IRDAI Exclusions in Text Blocks
+                if "maternity_exclusion" not in page_extracted_keys and ("excl18" in block_lower or ("maternity" in block_lower and any(w in block_lower for w in ["childbirth", "caesarean", "cesarean", "complicated deliveries"]))):
+                    candidates.append({
+                        "rule_type": "exclusion",
+                        "rule_key": "maternity_exclusion",
+                        "label": "Maternity & Caesarean Sections",
+                        "value": "Excluded",
+                        "formatted_value": "Excluded (Childbirth & Caesarean Sections)",
+                        "unit": "clause",
+                        "qualifiers": "childbirth, caesarean sections, and complicated deliveries",
+                        "page": p_num,
+                        "clause": "Code-Excl18 Maternity",
+                        "source_text": block[:500],
+                        "confidence": "HIGH"
+                    })
+                    page_extracted_keys.add("maternity_exclusion")
+
+                if "cosmetic_exclusion" not in page_extracted_keys and ("excl08" in block_lower or ("cosmetic" in block_lower and "plastic surgery" in block_lower)):
+                    candidates.append({
+                        "rule_type": "exclusion",
+                        "rule_key": "cosmetic_exclusion",
+                        "label": "Cosmetic or Plastic Surgery",
+                        "value": "Excluded",
+                        "formatted_value": "Excluded",
+                        "unit": "clause",
+                        "qualifiers": "cosmetic or plastic surgery",
+                        "page": p_num,
+                        "clause": "Code-Excl08 Cosmetic",
+                        "source_text": block[:500],
+                        "confidence": "HIGH"
+                    })
+                    page_extracted_keys.add("cosmetic_exclusion")
+
+                if "obesity_exclusion" not in page_extracted_keys and ("excl06" in block_lower or (("obesity" in block_lower or "bariatric" in block_lower) and "surgery" in block_lower)):
+                    candidates.append({
+                        "rule_type": "exclusion",
+                        "rule_key": "obesity_exclusion",
+                        "label": "Obesity / Bariatric Surgery",
+                        "value": "Excluded",
+                        "formatted_value": "Excluded unless criteria met",
+                        "unit": "clause",
+                        "qualifiers": "bariatric surgery",
+                        "page": p_num,
+                        "clause": "Code-Excl06 Obesity",
+                        "source_text": block[:500],
+                        "confidence": "HIGH"
+                    })
+                    page_extracted_keys.add("obesity_exclusion")
+
+                if "infertility_exclusion" not in page_extracted_keys and ("excl17" in block_lower or ("sterility" in block_lower or "infertility" in block_lower)):
+                    candidates.append({
+                        "rule_type": "exclusion",
+                        "rule_key": "infertility_exclusion",
+                        "label": "Sterility and Infertility",
+                        "value": "Excluded",
+                        "formatted_value": "Excluded",
+                        "unit": "clause",
+                        "qualifiers": "sterility, assisted reproduction, IVF",
+                        "page": p_num,
+                        "clause": "Code-Excl17 Infertility",
+                        "source_text": block[:500],
+                        "confidence": "HIGH"
+                    })
+                    page_extracted_keys.add("infertility_exclusion")
+
+                if "dental_exclusion" not in page_extracted_keys and ("dental treatment" in block_lower and "accident" in block_lower):
+                    candidates.append({
+                        "rule_type": "exclusion",
+                        "rule_key": "dental_exclusion",
+                        "label": "Dental Treatment",
+                        "value": "Excluded",
+                        "formatted_value": "Excluded unless hospitalisation from accident",
+                        "unit": "clause",
+                        "qualifiers": "unless due to accident",
+                        "page": p_num,
+                        "clause": "Specific Exclusions - Dental",
+                        "source_text": block[:500],
+                        "confidence": "HIGH"
+                    })
+                    page_extracted_keys.add("dental_exclusion")
+
         return candidates
 
     @staticmethod
@@ -921,7 +1066,7 @@ RETURN A VALID JSON ARRAY OF OBJECTS IN THIS SCHEMA:
                 if not any(w in c_src for w in WORKED_EX_WORDS):
                     c_val = c.get("value")
                     canon_val = canonical.get("value")
-                    if c_val is not None and canon_val is not None:
+                    if isinstance(c_val, (int, float)) and isinstance(canon_val, (int, float)):
                         if abs(c_val - canon_val) > 0.01:
                             if not (c_val == 0.0 and canon_val == 0.0):
                                 has_conflict = True
@@ -972,8 +1117,11 @@ RETURN A VALID JSON ARRAY OF OBJECTS IN THIS SCHEMA:
             if canonical.get("value") == 0.0:
                 val_found = any(w in raw_src for w in ["nil", "no co-payment", "0%", "zero", "single", "no cap"])
             elif canonical.get("value") is not None:
-                val_int_str = str(int(canonical["value"]))
-                val_found = (val_int_str in clean_src) or any(w in raw_src for w in ["lakh", "lac", "%", "days", "months", "day limit"])
+                try:
+                    val_int_str = str(int(canonical["value"]))
+                    val_found = (val_int_str in clean_src) or any(w in raw_src for w in ["lakh", "lac", "%", "days", "months", "day limit"])
+                except (ValueError, TypeError):
+                    val_found = True
             else:
                 val_found = True
 
