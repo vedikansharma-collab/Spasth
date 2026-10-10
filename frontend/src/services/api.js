@@ -57,4 +57,9 @@ export const calculateTreatment = async (payload) => {
   return response.data;
 };
 
+export const askPolicy = async (policyId, query) => {
+  const response = await api.post(`/policies/${policyId}/ask`, { query });
+  return response.data;
+};
+
 export default api;

@@ -1,60 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import HeroSection from '../components/HeroSection';
-import TrustIndicators from '../components/TrustIndicators';
-import HowItWorks from '../components/HowItWorks';
-import PolicyUpload from '../components/PolicyUpload';
-import PolicyAnalysisSummary from '../components/PolicyAnalysisSummary';
-import PolicyList from '../components/PolicyList';
-import TreatmentScenarioForm from '../components/TreatmentScenarioForm';
-import EstimationResultDashboard from '../components/EstimationResultDashboard';
-import EvidenceSection from '../components/EvidenceSection';
-import ScenarioSensitivitySection from '../components/ScenarioSensitivitySection';
-import ConfidenceSection from '../components/ConfidenceSection';
-import WhyFin01Section from '../components/WhyFin01Section';
-import FinalCTA from '../components/FinalCTA';
 import Footer from '../components/Footer';
-import ChatbotModal from '../components/ChatbotModal';
-import { calculateEstimate } from '../services/api';
+import DashboardHomeView from '../components/DashboardHomeView';
+import PolicyAssistantView from '../components/PolicyAssistantView';
+import CostEstimatorView from '../components/CostEstimatorView';
+import PolicyDocumentView from '../components/PolicyDocumentView';
+import PolicyUpload from '../components/PolicyUpload';
+import { calculateEstimate, getPolicyDetail, getPolicies } from '../services/api';
+import { X, UploadCloud } from 'lucide-react';
 
 export default function Dashboard() {
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [activePolicyId, setActivePolicyId] = useState(null);
-  const [uploadData, setUploadData] = useState(null);
+  const [activePolicy, setActivePolicy] = useState(null);
+  const [policies, setPolicies] = useState([]);
   const [estimateResult, setEstimateResult] = useState(null);
   const [estimating, setEstimating] = useState(false);
   const [lastScenario, setLastScenario] = useState(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
 
-  const scrollToEstimator = () => {
-    const el = document.getElementById('estimator');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+  // Citation navigation targets
+  const [targetDocPage, setTargetDocPage] = useState(1);
+  const [targetDocCitation, setTargetDocCitation] = useState(null);
+  const [previousTab, setPreviousTab] = useState('dashboard');
+
+  // Quick Upload Modal
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+  // Load indexed policies on mount
+  const refreshPolicies = async () => {
+    try {
+      const list = await getPolicies();
+      setPolicies(list || []);
+      // If no active policy is set, auto-select the latest indexed document
+      if (!activePolicyId && list && list.length > 0) {
+        setActivePolicyId(list[0].id);
+      }
+    } catch (err) {
+      console.error('Error fetching indexed policies:', err);
     }
   };
 
-  const scrollToHowItWorks = () => {
-    const el = document.getElementById('how-it-works');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+  useEffect(() => {
+    refreshPolicies();
+  }, []);
+
+  // Fetch full policy details whenever activePolicyId changes
+  useEffect(() => {
+    if (!activePolicyId) {
+      setActivePolicy(null);
+      return;
     }
-  };
+
+    const loadPolicyDetail = async () => {
+      try {
+        const detail = await getPolicyDetail(activePolicyId);
+        setActivePolicy(detail);
+      } catch (err) {
+        console.error('Error loading policy details:', err);
+      }
+    };
+
+    loadPolicyDetail();
+  }, [activePolicyId]);
 
   const handleUploadSuccess = (data) => {
-    setUploadData(data);
     setActivePolicyId(data.policy_id);
-    setEstimateResult(null);
-  };
-
-  const handleReset = () => {
-    setActivePolicyId(null);
-    setUploadData(null);
-    setEstimateResult(null);
-    setLastScenario(null);
+    setIsUploadModalOpen(false);
+    refreshPolicies();
+    setActiveTab('dashboard');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSelectPolicy = (policyId) => {
     setActivePolicyId(policyId);
-    setUploadData(null);
+    setEstimateResult(null);
+    setLastScenario(null);
+  };
+
+  const handleReset = () => {
+    setActivePolicyId(null);
+    setActivePolicy(null);
     setEstimateResult(null);
     setLastScenario(null);
   };
@@ -70,15 +95,8 @@ export default function Dashboard() {
         policy_id: activePolicyId
       });
       setEstimateResult(result);
-      // Smooth scroll to results
-      setTimeout(() => {
-        const resEl = document.getElementById('results');
-        if (resEl) {
-          resEl.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
     } catch (err) {
-      console.error('Error calculating financial estimate:', err);
+      console.error('Error calculating estimate:', err);
       alert(err.response?.data?.detail || 'Failed to calculate out-of-pocket estimate.');
     } finally {
       setEstimating(false);
@@ -93,109 +111,122 @@ export default function Dashboard() {
     });
   };
 
+  // Bidirectional citation navigation
+  const handleNavigateToDoc = (pageNumber, citation = null) => {
+    setPreviousTab(activeTab);
+    setTargetDocPage(pageNumber || 1);
+    setTargetDocCitation(citation);
+    setActiveTab('document');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleReturnFromDoc = (targetDestination) => {
+    setTargetDocCitation(null);
+    setActiveTab(targetDestination || previousTab || 'dashboard');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-white text-slate-900 font-sans">
-      {/* Section 1: Navigation */}
-      <Navbar onOpenChat={() => setIsChatOpen(true)} />
-
-      {/* Section 2: Hero Section */}
-      <HeroSection
-        onAnalyzeClick={scrollToEstimator}
-        onHowItWorksClick={scrollToHowItWorks}
+    <div className="min-h-screen flex flex-col bg-white text-[#003339] font-sans antialiased">
+      {/* 1. Global Navigation Bar */}
+      <Navbar
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        activePolicy={activePolicy}
+        onUploadClick={() => setIsUploadModalOpen(true)}
       />
 
-      {/* Section 3: Trust & Value Indicators */}
-      <TrustIndicators />
+      {/* 2. Main Content Area */}
+      <main className="flex-1">
+        {activeTab === 'dashboard' && (
+          <DashboardHomeView
+            activePolicyId={activePolicyId}
+            activePolicy={activePolicy}
+            onUploadSuccess={handleUploadSuccess}
+            onSelectPolicy={handleSelectPolicy}
+            onOpenAssistant={() => handleTabChange('assistant')}
+            onOpenEstimator={() => handleTabChange('estimator')}
+            onOpenDocument={(page, cite) => handleNavigateToDoc(page, cite)}
+            onResetPolicy={handleReset}
+            policies={policies}
+          />
+        )}
 
-      {/* Section 4: How It Works */}
-      <HowItWorks />
+        {activeTab === 'assistant' && (
+          <PolicyAssistantView
+            activePolicyId={activePolicyId}
+            activePolicy={activePolicy}
+            onNavigateToDoc={(page, cite) => handleNavigateToDoc(page, cite)}
+            onSelectPolicy={handleSelectPolicy}
+            policies={policies}
+          />
+        )}
 
-      {/* Section 5: Core Estimator Application (#estimator) */}
-      <section id="estimator" className="py-16 bg-offwhite border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-          
-          <div className="text-center max-w-3xl mx-auto space-y-3">
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-              Estimate Your Out-of-Pocket Cost
-            </h2>
-            <p className="text-base text-slate-600 font-normal">
-              See how your health policy may apply to a specific medical treatment scenario.
-            </p>
-          </div>
+        {activeTab === 'estimator' && (
+          <CostEstimatorView
+            activePolicyId={activePolicyId}
+            activePolicy={activePolicy}
+            onCalculate={handleCalculateScenario}
+            estimateResult={estimateResult}
+            estimating={estimating}
+            onRecalculateRoom={handleRoomRecalculate}
+            onNavigateToDoc={(page, cite) => handleNavigateToDoc(page, cite)}
+            onSelectPolicy={handleSelectPolicy}
+            policies={policies}
+          />
+        )}
 
-          {/* Full-Width Stacked Sequential Layout (Top-to-Bottom Flow) */}
-          <div className="space-y-8">
-            {/* STEP 1: Policy Upload & Document Analysis (Full Width) */}
-            <div className="space-y-6">
-              {!activePolicyId ? (
-                <PolicyUpload onUploadSuccess={handleUploadSuccess} />
-              ) : (
-                <PolicyAnalysisSummary
-                  policyId={activePolicyId}
-                  uploadData={uploadData}
-                  onReset={handleReset}
-                />
-              )}
-            </div>
+        {activeTab === 'document' && (
+          <PolicyDocumentView
+            activePolicyId={activePolicyId}
+            activePolicy={activePolicy}
+            targetPage={targetDocPage}
+            targetCitation={targetDocCitation}
+            onReturnToAssistant={() => handleReturnFromDoc('assistant')}
+            onReturnToEstimator={() => handleReturnFromDoc('estimator')}
+            onSelectPolicy={handleSelectPolicy}
+            policies={policies}
+          />
+        )}
+      </main>
 
-            {/* Indexed Policy Document Library */}
-            <PolicyList
-              onSelectPolicy={handleSelectPolicy}
-              activePolicyId={activePolicyId}
-            />
-
-            {/* STEP 2: Treatment Scenario Builder (Full Width) */}
-            <div className="space-y-4">
-              <TreatmentScenarioForm
-                policyId={activePolicyId}
-                onCalculate={handleCalculateScenario}
-                loading={estimating}
-              />
-
-              {!activePolicyId && (
-                <div className="card-white p-5 text-center text-xs text-slate-500 space-y-1 border-dashed max-w-2xl mx-auto">
-                  <p className="font-semibold text-slate-700">📌 Step 1 Required</p>
-                  <p>Upload a policy PDF or select an indexed document above to enable scenario calculation.</p>
-                </div>
-              )}
-            </div>
-
-            {/* STEP 3: Financial Breakdown Dashboard (Full Width) */}
-            {estimateResult && (
-              <EstimationResultDashboard
-                estimate={estimateResult}
-                onRecalculate={handleRoomRecalculate}
-                loading={estimating}
-              />
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Section 7: Evidence & Citation Section */}
-      <EvidenceSection onInspectClick={scrollToEstimator} />
-
-      {/* Section 8: Scenario Sensitivity Section */}
-      <ScenarioSensitivitySection
-        currentEstimate={estimateResult}
-        onToggleRoom={handleRoomRecalculate}
-        loading={estimating}
-      />
-
-      {/* Section 9: Confidence & Transparency Section */}
-      <ConfidenceSection />
-
-      {/* Section 10: Why Spasth Section */}
-      <WhyFin01Section />
-
-      {/* Section 11: Final CTA */}
-      <FinalCTA onAnalyzeClick={scrollToEstimator} />
-
-      {/* Section 12: Footer */}
+      {/* 3. Global Footer */}
       <Footer />
 
-      {/* Section 13: Interactive AI Policy Chatbot Modal */}
-      <ChatbotModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      {/* 4. Upload Policy Modal Dialog */}
+      {isUploadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div 
+            className="card-white max-w-lg w-full p-6 space-y-4 shadow-2xl relative border-[#E2E8E8]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8E8]">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[rgba(57,171,173,0.12)] border border-[#39ABAD]/40 flex items-center justify-center text-[#006668]">
+                  <UploadCloud className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-[#003339] text-base">Upload Policy PDF</h3>
+                  <p className="text-xs text-[#4A5859]">Index clauses and preserve page citations</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsUploadModalOpen(false)}
+                className="p-1.5 rounded-lg bg-[#F7F7F8] text-[#4A5859] hover:text-[#003339] hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <PolicyUpload onUploadSuccess={handleUploadSuccess} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

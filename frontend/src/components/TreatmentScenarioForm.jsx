@@ -47,13 +47,13 @@ export default function TreatmentScenarioForm({ policyId, onCalculate, loading }
 
   return (
     <div className="card-white p-6 sm:p-7 space-y-5">
-      <div className="flex items-center space-x-3 pb-4 border-b border-slate-100">
-        <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+      <div className="flex items-center space-x-3 pb-4 border-b border-[#E2E8E8]">
+        <div className="w-10 h-10 rounded-xl bg-[rgba(57,171,173,0.12)] border border-[#39ABAD]/40 flex items-center justify-center text-[#006668]">
           <Stethoscope className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-base font-bold text-slate-900">Treatment Scenario Builder</h3>
-          <p className="text-xs text-slate-500">Specify hospital procedure, city, room category, and policy tenure for validated cost estimation.</p>
+          <h3 className="text-base font-bold text-[#003339]">Treatment Scenario Builder</h3>
+          <p className="text-xs text-[#4A5859]">Specify hospital procedure, city, room category, and policy tenure for validated cost estimation.</p>
         </div>
       </div>
 
@@ -61,14 +61,14 @@ export default function TreatmentScenarioForm({ policyId, onCalculate, loading }
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Procedure Selection */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 flex items-center space-x-1.5">
-              <Stethoscope className="w-3.5 h-3.5 text-emerald-700" />
+            <label className="text-xs font-semibold text-[#003339] flex items-center space-x-1.5">
+              <Stethoscope className="w-3.5 h-3.5 text-[#006668]" />
               <span>Medical Procedure</span>
             </label>
             <select
               value={selectedProcedure}
               onChange={(e) => setSelectedProcedure(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#E2E8E8] text-xs font-medium text-[#003339] focus:outline-hidden focus:border-[#006668] focus:ring-1 focus:ring-[#006668] transition-all"
             >
               {procedures.map((proc) => (
                 <option key={proc} value={proc}>{proc}</option>
@@ -78,14 +78,14 @@ export default function TreatmentScenarioForm({ policyId, onCalculate, loading }
 
           {/* City Selection */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 flex items-center space-x-1.5">
-              <MapPin className="w-3.5 h-3.5 text-emerald-700" />
+            <label className="text-xs font-semibold text-[#003339] flex items-center space-x-1.5">
+              <MapPin className="w-3.5 h-3.5 text-[#006668]" />
               <span>City / Region</span>
             </label>
             <select
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#E2E8E8] text-xs font-medium text-[#003339] focus:outline-hidden focus:border-[#006668] focus:ring-1 focus:ring-[#006668] transition-all"
             >
               {cities.map((city) => (
                 <option key={city} value={city}>{city}</option>
@@ -97,8 +97,8 @@ export default function TreatmentScenarioForm({ policyId, onCalculate, loading }
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
           {/* Room Category Selection */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 flex items-center space-x-1.5">
-              <Bed className="w-3.5 h-3.5 text-emerald-700" />
+            <label className="text-xs font-semibold text-[#003339] flex items-center space-x-1.5">
+              <Bed className="w-3.5 h-3.5 text-[#006668]" />
               <span>Hospital Room</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -109,8 +109,8 @@ export default function TreatmentScenarioForm({ policyId, onCalculate, loading }
                   onClick={() => setSelectedRoom(room)}
                   className={`py-2 px-2.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer text-center ${
                     selectedRoom === room
-                      ? 'bg-emerald-700 text-white border-emerald-700 shadow-2xs'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      ? 'bg-[#006668] text-white border-[#006668] shadow-2xs'
+                      : 'bg-white text-[#4A5859] border-[#E2E8E8] hover:bg-[#F7F7F8]'
                   }`}
                 >
                   {room}
@@ -121,14 +121,14 @@ export default function TreatmentScenarioForm({ policyId, onCalculate, loading }
 
           {/* Policy Active Tenure (Months) */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 flex items-center space-x-1.5">
-              <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+            <label className="text-xs font-semibold text-[#003339] flex items-center space-x-1.5">
+              <Calendar className="w-3.5 h-3.5 text-[#006668]" />
               <span>Policy Tenure</span>
             </label>
             <select
               value={policyTenureMonths}
               onChange={(e) => setPolicyTenureMonths(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-emerald-600 transition-all"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-[#E2E8E8] text-xs font-medium text-[#003339] focus:outline-hidden focus:border-[#006668] transition-all"
             >
               <option value="6">6 Months (Initial / New)</option>
               <option value="12">12 Months (1 Year)</option>

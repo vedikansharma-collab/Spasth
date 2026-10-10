@@ -6,7 +6,9 @@ from app.schemas.policy import (
     PolicyUploadResponse,
     PolicyDetailResponse,
     PolicySummaryResponse,
-    PolicyPageSchema
+    PolicyPageSchema,
+    PolicyAskRequest,
+    PolicyAskResponse
 )
 
 router = APIRouter(prefix="/policies", tags=["Policies"])
@@ -59,3 +61,17 @@ def get_policy_page(policy_id: str, page_number: int):
             detail=f"Page {page_number} not found in policy (total pages: {policy.get('page_count')})."
         )
     return page
+
+@router.post("/{policy_id}/ask", response_model=PolicyAskResponse)
+def ask_policy(policy_id: str, request: PolicyAskRequest):
+    """
+    POST /api/policies/{policy_id}/ask
+    Answers policy questions grounded in extracted policy document text and preserved page citations.
+    """
+    result = PolicyService.answer_policy_query(policy_id, request.query)
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Policy with ID '{policy_id}' not found."
+        )
+    return result

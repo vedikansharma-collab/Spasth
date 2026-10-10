@@ -48,3 +48,18 @@ class PolicySummaryResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class PolicyCitationSchema(BaseModel):
+    page: int
+    clause: Optional[str] = "N/A"
+    rule: Optional[str] = "Policy Term"
+    source_text: str
+
+class PolicyAskRequest(BaseModel):
+    query: str
+
+class PolicyAskResponse(BaseModel):
+    policy_id: str
+    query: str
+    answer: str
+    citations: List[PolicyCitationSchema] = []

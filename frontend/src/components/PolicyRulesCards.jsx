@@ -1,15 +1,17 @@
 import React from 'react';
-import { DollarSign, Percent, Bed, ShieldAlert, Clock, FileText } from 'lucide-react';
+import { DollarSign, Percent, Bed, ShieldAlert, Clock, FileText, AlertCircle } from 'lucide-react';
 
-export default function PolicyRulesCards({ rules }) {
+export default function PolicyRulesCards({ rules, onCitationClick }) {
   if (!rules || rules.length === 0) {
-    rules = [
-      { rule_type: 'sum_insured', label: 'Sum Insured', value: '₹5,00,000', page: 1, clause: 'Schedule', icon: DollarSign },
-      { rule_type: 'copay', label: 'Co-Payment', value: '10%', page: 2, clause: 'Clause 2.1', icon: Percent },
-      { rule_type: 'room_rent_limit', label: 'Room Rent Limit', value: '₹5,000 / day', page: 1, clause: 'Clause 1.2', icon: Bed },
-      { rule_type: 'sub_limit', label: 'Appendectomy Sub-Limit', value: '₹90,000 Cap', page: 2, clause: 'Clause 2.3', icon: ShieldAlert },
-      { rule_type: 'waiting_period', label: 'PED Waiting Period', value: '36 Months', page: 2, clause: 'Clause 3.3', icon: Clock }
-    ];
+    return (
+      <div className="card-white p-5 text-center text-xs text-slate-500 border-dashed space-y-1">
+        <div className="flex items-center justify-center space-x-1.5 text-slate-600 font-semibold">
+          <AlertCircle className="w-4 h-4 text-slate-400" />
+          <span>No Policy Rules Extracted</span>
+        </div>
+        <p>Upload a policy PDF or select an indexed document to extract Sum Insured, Co-pay, Room Caps, and Sub-limits.</p>
+      </div>
+    );
   }
 
   const getRuleIcon = (type) => {
@@ -46,10 +48,21 @@ export default function PolicyRulesCards({ rules }) {
             }
           }
 
+          const citationObj = {
+            page: rule.page || 1,
+            clause: rule.clause || 'N/A',
+            rule: displayLabel,
+            source_text: rule.source_text || `${displayLabel}: ${displayValue}`,
+            details: displayValue
+          };
+
           return (
             <div 
               key={idx} 
-              className="p-3.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-500 transition-all space-y-2 shadow-2xs group"
+              onClick={() => onCitationClick && onCitationClick(citationObj)}
+              className={`p-3.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-500 transition-all space-y-2 shadow-2xs group ${
+                onCitationClick ? 'cursor-pointer hover:shadow-xs' : ''
+              }`}
             >
               <div className="flex items-center justify-between text-slate-500">
                 <span className="text-xs font-semibold text-slate-700 truncate">{displayLabel}</span>
@@ -62,7 +75,7 @@ export default function PolicyRulesCards({ rules }) {
 
               <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 font-mono">
                 <span>Page {rule.page || 1}</span>
-                <span className="text-emerald-700 font-bold">{rule.clause || 'N/A'}</span>
+                <span className="text-emerald-700 font-bold group-hover:underline">{rule.clause || 'N/A'}</span>
               </div>
             </div>
           );
