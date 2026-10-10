@@ -41,7 +41,8 @@ class PolicyHybridRetriever:
         "claim", "claims", "contract", "contracts", "insurance", "document", "documents",
         "page", "pages", "myself", "any", "how", "do", "i", "to", "pay", "of", "my",
         "the", "a", "an", "is", "are", "there", "disclaimer", "disclaimers", "terms",
-        "conditions", "apply", "sample", "illustration", "expenses", "expense"
+        "conditions", "apply", "sample", "illustration", "expenses", "expense",
+        "surgery", "treatment", "hospital", "medical", "disease", "care", "service", "procedure", "charges"
     }
 
     @classmethod
@@ -97,7 +98,10 @@ class PolicyHybridRetriever:
                     score += 0.70
                 elif intent == "waiting_period" and any(k in r_id or k in cat or k in name or k in src for k in ["waiting", "ped", "pre-existing"]):
                     score += 0.70
-                elif intent in r_id or intent in cat or intent in name:
+                elif intent in ["sublimits", "deductible", "exclusions", "room_rent", "eligibility", "reimbursement", "network_hospital", "disease_waiting_period"]:
+                    if any(k in r_id or k in cat or k in name or k in src for k in [intent, intent.replace("_", " "), intent.replace("_", "")]):
+                        score += 0.70
+                elif intent != "coverage" and (intent in r_id or intent in cat or intent in name):
                     score += 0.65
                 elif any(kw in src or kw in quals for kw in [intent]):
                     score += 0.45

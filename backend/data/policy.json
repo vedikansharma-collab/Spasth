@@ -1,28 +1,52 @@
 {
   "policy": {
-    "policy_id": "2ec4c40f-2b45-4fe7-8c85-d65b1faeb9d4",
-    "product_name": "sample health policy",
-    "policy_type": "Comprehensive Health Insurance (Indemnity)",
+    "policy_id": "3afaa05b-3716-4818-bd35-67d73ad9c1a2",
+    "product_name": "Swasthya Suraksha Health Insurance Policy",
+    "policy_type": "Family Floater (Indemnity)",
     "policy_period": {
-      "start": "01-Jan-2026",
-      "end": "31-Dec-2026"
+      "start": "01-Nov-2026",
+      "end": "31-Oct-2027"
     },
     "sum_insured": {
-      "value": 500000.0,
+      "value": 1000000.0,
       "currency": "INR",
       "unit": "INR",
-      "formatted_value": "₹500,000",
+      "formatted_value": "₹1,000,000",
       "sources": [
         {
-          "page": 1,
-          "clause": "Policy Schedule",
-          "source_text": "Sum Insured: INR 5,00,000 (Five Lakh Rupees)",
+          "page": 2,
+          "clause": "Policy Schedule Table",
+          "source_text": "Sum Insured (Floater) | Rs. 10,00,000",
           "bbox": {
-            "x": 50.0,
-            "y": 83.52,
-            "width": 62.36,
-            "height": 15.11,
-            "page": 1
+            "x": 56.02,
+            "y": 263.06,
+            "width": 52.09,
+            "height": 11.84,
+            "page": 2
+          }
+        },
+        {
+          "page": 17,
+          "clause": "Policy Schedule",
+          "source_text": "plate and screws at a network hospital. Sum Insured Rs. 10,00,000; opening cumulative bonus nil; no co-payment.",
+          "bbox": {
+            "x": 57.02,
+            "y": 125.27,
+            "width": 259.98,
+            "height": 12.64,
+            "page": 17
+          }
+        },
+        {
+          "page": 16,
+          "clause": "Policy Schedule Table",
+          "source_text": "4 | Sum insured (basis) | Rs. 10,00,000 floater; available options Rs. 5 lakh to Rs. 25 lakh",
+          "bbox": {
+            "x": 209.09,
+            "y": 197.02,
+            "width": 53.54,
+            "height": 11.82,
+            "page": 16
           }
         }
       ]
@@ -30,95 +54,169 @@
   },
   "coverage_rules": [
     {
-      "rule_id": "734",
-      "rule_key": "room_category",
-      "name": "Room Category",
-      "category": "room_rent_limit",
-      "original_value": "₹5,000/day (1% of Sum Insured)",
-      "value": 5000.0,
-      "normalized_value": 5000.0,
-      "unit": "INR_per_day",
-      "formatted_value": "₹5,000/day (1% of Sum Insured)",
-      "basis": "sum_insured",
-      "frequency": null,
-      "values": {
-        "cap_amount": 5000.0,
-        "category": "cap_₹5,000/day"
-      },
-      "limits": [
-        {
-          "type": "room_rent_limit",
-          "value": 5000.0,
-          "unit": "INR_per_day",
-          "qualifier": "cap_₹5,000/day"
-        }
-      ],
-      "conditions": [],
-      "qualifiers": [
-        "cap_₹5,000/day"
-      ],
-      "exceptions": [],
-      "page": 1,
-      "section": "In-patient Hospitalisation Clause",
-      "clause": "In-patient Hospitalisation Clause",
-      "source_text": "1.2 Room Rent Limit: Capped at 1% of Sum Insured per day (INR 5,000/day) for Standard Single Room.",
-      "bbox": {
-        "x": 50.0,
-        "y": 174.2,
-        "width": 213.98,
-        "height": 15.11,
-        "page": 1
-      },
-      "additional_sources": [],
-      "status": "VERIFIED",
-      "confidence": "HIGH"
-    },
-    {
-      "rule_id": "735",
+      "rule_id": "794",
       "rule_key": "copay",
       "name": "Copay",
       "category": "copay",
-      "original_value": "10%",
-      "value": 10.0,
-      "normalized_value": 10.0,
+      "original_value": "0% (Nil)",
+      "value": 0.0,
+      "normalized_value": 0.0,
       "unit": "percent",
-      "formatted_value": "10%",
+      "formatted_value": "0% (Nil)",
       "basis": null,
       "frequency": null,
       "values": {
-        "rate": 10.0,
+        "rate": 0.0,
         "unit": "percent"
       },
       "limits": [
         {
           "type": "copayment_rate",
-          "value": 10.0,
+          "value": 0.0,
           "unit": "percent",
           "basis": "admissible_claims"
         }
       ],
       "conditions": [],
       "qualifiers": [
-        "mandatory co-payment"
+        "no co-payment"
       ],
       "exceptions": [],
       "page": 2,
-      "section": "Co-payment Clause",
-      "clause": "Co-payment Clause",
-      "source_text": "2.1 Mandatory Co-Payment: A mandatory co-payment of 10% applies to all eligible claims.",
+      "section": null,
+      "clause": "Co-payment Schedule",
+      "source_text": "Co-payment | Nil (no co-payment on any claim)",
       "bbox": {
-        "x": 114.18,
-        "y": 38.17,
-        "width": 73.34,
-        "height": 15.11,
+        "x": 56.02,
+        "y": 299.46,
+        "width": 49.69,
+        "height": 11.84,
         "page": 2
       },
-      "additional_sources": [],
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Co-payment Schedule",
+          "source_text": "8 | Co-payment | Nil",
+          "bbox": {
+            "x": 78.7,
+            "y": 314.62,
+            "width": 46.84,
+            "height": 11.82,
+            "page": 16
+          }
+        },
+        {
+          "page": 8,
+          "clause": "Co-payment Clause",
+          "source_text": "Co-payment: This plan has no co-payment. The full admissible claim is payable up to the Sum Insured and",
+          "bbox": {
+            "x": 71.02,
+            "y": 318.07,
+            "width": 272.34,
+            "height": 12.71,
+            "page": 8
+          }
+        },
+        {
+          "page": 17,
+          "clause": "Co-payment Clause",
+          "source_text": "plate and screws at a network hospital. Sum Insured Rs. 10,00,000; opening cumulative bonus nil; no co-payment.",
+          "bbox": {
+            "x": 57.02,
+            "y": 125.27,
+            "width": 259.98,
+            "height": 12.64,
+            "page": 17
+          }
+        }
+      ],
       "status": "VERIFIED",
       "confidence": "HIGH"
     },
     {
-      "rule_id": "738",
+      "rule_id": "795",
+      "rule_key": "room_category",
+      "name": "Room Category",
+      "category": "room_rent_limit",
+      "original_value": "Single Private A/C Room (No Cap)",
+      "value": null,
+      "normalized_value": null,
+      "unit": "category",
+      "formatted_value": "Single Private A/C Room (No Cap)",
+      "basis": "sum_insured",
+      "frequency": null,
+      "values": {
+        "cap_amount": null,
+        "category": "no cap"
+      },
+      "limits": [
+        {
+          "type": "room_rent_limit",
+          "value": null,
+          "unit": "category",
+          "qualifier": "no cap"
+        }
+      ],
+      "conditions": [],
+      "qualifiers": [
+        "no cap"
+      ],
+      "exceptions": [],
+      "page": 2,
+      "section": null,
+      "clause": "Room Entitlement Table",
+      "source_text": "Zone / Room Category | Zone B (Pune) / Single private A/C room",
+      "bbox": {
+        "x": 83.74,
+        "y": 317.66,
+        "width": 64.03,
+        "height": 11.84,
+        "page": 2
+      },
+      "additional_sources": [
+        {
+          "page": 6,
+          "clause": "Room Entitlement Table",
+          "source_text": "39 | Room Rent | The amount charged by a Hospital towards room and boarding expenses and shall include the associated medical expenses.",
+          "bbox": {
+            "x": 84.37,
+            "y": 414.26,
+            "width": 45.86,
+            "height": 11.84,
+            "page": 6
+          }
+        },
+        {
+          "page": 7,
+          "clause": "Room Entitlement Table",
+          "source_text": "1.1 | In-patient Hospitalisation | Room rent, boarding and nursing charges; Medical Practitioner, surgeon and anaesthetist fees; operation theatre charges; investigations and diagnostics during stay; medicines, drugs, consumables, implants and blood; oxygen, dialysis, chemotherapy, radiotherapy. | Up to Sum Insured. Room rent: single private A/C room (no cap). ICU: actuals.",
+          "bbox": {
+            "x": 169.41,
+            "y": 180.22,
+            "width": 40.14,
+            "height": 11.82,
+            "page": 7
+          }
+        },
+        {
+          "page": 17,
+          "clause": "Room Entitlement Table",
+          "source_text": "Room rent, nursing and OT charges | 92,000 | Single private A/C room: no cap",
+          "bbox": {
+            "x": 56.02,
+            "y": 212.62,
+            "width": 40.14,
+            "height": 11.82,
+            "page": 17
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "797",
       "rule_key": "pre_hospitalisation",
       "name": "Pre Hospitalisation",
       "category": "sub_limit",
@@ -147,23 +245,23 @@
         "within Sum Insured"
       ],
       "exceptions": [],
-      "page": 2,
-      "section": "Pre-Hospitalisation Clause",
-      "clause": "Pre-Hospitalisation Clause",
-      "source_text": "2.4 Pre-Hospitalization: Covered up to 60 days prior to admission.",
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.2 | Pre-Hospitalisation | Medical expenses incurred for the same illness/injury in the period immediately before admission. | Up to 60 days, within Sum Insured",
       "bbox": {
-        "x": 68.35,
-        "y": 98.63,
-        "width": 92.3,
-        "height": 15.11,
-        "page": 2
+        "x": 84.37,
+        "y": 243.22,
+        "width": 72.16,
+        "height": 11.82,
+        "page": 7
       },
       "additional_sources": [],
       "status": "VERIFIED",
       "confidence": "HIGH"
     },
     {
-      "rule_id": "739",
+      "rule_id": "798",
       "rule_key": "post_hospitalisation",
       "name": "Post Hospitalisation",
       "category": "sub_limit",
@@ -172,7 +270,7 @@
       "normalized_value": 90.0,
       "unit": "days",
       "formatted_value": "Up to 90 days",
-      "basis": null,
+      "basis": "sum_insured",
       "frequency": null,
       "values": {
         "amount": 90.0,
@@ -183,7 +281,7 @@
           "type": "sub_limit",
           "value": 90.0,
           "unit": "days",
-          "basis": null,
+          "basis": "sum_insured",
           "frequency": null
         }
       ],
@@ -192,25 +290,153 @@
         "within Sum Insured"
       ],
       "exceptions": [],
-      "page": 2,
-      "section": "Post-Hospitalisation Clause",
-      "clause": "Post-Hospitalisation Clause",
-      "source_text": "2.5 Post-Hospitalization: Covered up to 90 days following discharge.",
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.3 | Post-Hospitalisatio n | Medical expenses incurred for the same illness/injury in the period immediately after discharge. | Up to 90 days, within Sum Insured",
       "bbox": {
-        "x": 68.35,
-        "y": 113.75,
-        "width": 97.2,
-        "height": 15.11,
-        "page": 2
+        "x": 84.37,
+        "y": 272.62,
+        "width": 20.07,
+        "height": 11.82,
+        "page": 7
       },
       "additional_sources": [],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "800",
+      "rule_key": "ambulance_sublimit",
+      "name": "Ambulance Sublimit",
+      "category": "sub_limit",
+      "original_value": "Up to ₹3,000 per hospitalisation",
+      "value": 3000.0,
+      "normalized_value": 3000.0,
+      "unit": "INR",
+      "formatted_value": "Up to ₹3,000 per hospitalisation",
+      "basis": null,
+      "frequency": "per hospitalisation",
+      "values": {
+        "amount": 3000.0,
+        "unit": "INR"
+      },
+      "limits": [
+        {
+          "type": "sub_limit",
+          "value": 3000.0,
+          "unit": "INR",
+          "basis": null,
+          "frequency": "per hospitalisation"
+        }
+      ],
+      "conditions": [],
+      "qualifiers": [
+        "per hospitalisation"
+      ],
+      "exceptions": [],
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.6 | Road Ambulance | Reasonable cost of ambulance to take the Insured Person to the Hospital in an emergency, or to transfer to another Hospital. | Up to Rs. 3,000 per hospitalisation",
+      "bbox": {
+        "x": 84.37,
+        "y": 428.02,
+        "width": 65.96,
+        "height": 11.82,
+        "page": 7
+      },
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "9 | Sub-limits | Domiciliary 10% of SI; modern treatment 50% of SI; ambulance Rs. 3,000; cataract Rs. 40,000 per eye; organ donor Rs. 1,00,000",
+          "bbox": {
+            "x": 253.48,
+            "y": 332.82,
+            "width": 17.21,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
       "status": "VERIFIED",
       "confidence": "HIGH"
     }
   ],
   "waiting_periods": [
     {
-      "rule_id": "740",
+      "rule_id": "796",
+      "rule_key": "ped_waiting_period",
+      "name": "Ped Waiting Period",
+      "category": "waiting_period",
+      "original_value": "36 months continuous coverage",
+      "value": 36.0,
+      "normalized_value": 36.0,
+      "unit": "months",
+      "formatted_value": "36 months continuous coverage",
+      "basis": null,
+      "frequency": null,
+      "values": {
+        "amount": 36.0,
+        "unit": "months"
+      },
+      "limits": [
+        {
+          "type": "waiting_period",
+          "value": 36.0,
+          "unit": "months",
+          "basis": null,
+          "frequency": null
+        }
+      ],
+      "conditions": [],
+      "qualifiers": [
+        "continuous coverage"
+      ],
+      "exceptions": [],
+      "page": 9,
+      "section": null,
+      "clause": "Waiting Period Schedule Table",
+      "source_text": "Excl01 | Pre-existing diseases (PED) | 36 months of continuous coverage | Expenses for treatment of PED and its direct complications are payable only after 36 months of continuous coverage. Any PED not declared, or declared later, is subject to the same waiting period from the date of declaration and acceptance.",
+      "bbox": {
+        "x": 60.09,
+        "y": 108.27,
+        "width": 27.61,
+        "height": 12.64,
+        "page": 9
+      },
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Waiting Period Schedule Table",
+          "source_text": "7 | Waiting periods | Initial 30 days; PED 36 months; specific diseases 24/36 months; moratorium 60 months",
+          "bbox": {
+            "x": 231.56,
+            "y": 285.22,
+            "width": 30.12,
+            "height": 11.82,
+            "page": 16
+          }
+        },
+        {
+          "page": 2,
+          "clause": "Pre-existing Diseases Clause",
+          "source_text": "Pre-existing diseases declared above are covered after the waiting period in Part E (36 months of continuous",
+          "bbox": {
+            "x": 71.02,
+            "y": 694.87,
+            "width": 261.48,
+            "height": 12.64,
+            "page": 2
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "805",
       "rule_key": "initial_waiting_period",
       "name": "Initial Waiting Period",
       "category": "waiting_period",
@@ -241,32 +467,86 @@
         "illness from policy inception"
       ],
       "exceptions": [],
-      "page": 2,
-      "section": "Initial Waiting Period Clause",
-      "clause": "Initial Waiting Period Clause",
-      "source_text": "3.1 Initial Waiting Period: 30 days from policy inception (except accidental injuries).",
+      "page": 9,
+      "section": null,
+      "clause": "Waiting Period Schedule Table",
+      "source_text": "Excl03 | Initial waiting period | 30 days from first policy start date | No claim is payable for illness contracted during the first 30 days of the first policy. Not applicable to injury caused by an accident, or on renewal.",
       "bbox": {
-        "x": 68.35,
-        "y": 159.09,
-        "width": 100.25,
-        "height": 15.11,
-        "page": 2
+        "x": 95.71,
+        "y": 180.22,
+        "width": 75.52,
+        "height": 11.82,
+        "page": 9
       },
       "additional_sources": [],
       "status": "VERIFIED",
       "confidence": "HIGH"
     },
     {
-      "rule_id": "741",
-      "rule_key": "ped_waiting_period",
-      "name": "Ped Waiting Period",
+      "rule_id": "806",
+      "rule_key": "specific_disease_waiting_period",
+      "name": "Specific Disease Waiting Period",
       "category": "waiting_period",
-      "original_value": "36 months continuous coverage",
+      "original_value": "24 months continuous coverage",
+      "value": 24.0,
+      "normalized_value": 24.0,
+      "unit": "months",
+      "formatted_value": "24 months continuous coverage",
+      "basis": "sum_insured",
+      "frequency": null,
+      "values": {
+        "amount": 24.0,
+        "unit": "months"
+      },
+      "limits": [
+        {
+          "type": "waiting_period",
+          "value": 24.0,
+          "unit": "months",
+          "basis": "sum_insured",
+          "frequency": null
+        }
+      ],
+      "conditions": [
+        "joint replacement and osteoarthritis"
+      ],
+      "qualifiers": [
+        "continuous coverage"
+      ],
+      "exceptions": [],
+      "page": 9,
+      "section": null,
+      "clause": "Waiting Period Schedule Table",
+      "source_text": "Excl02 | Specific disease / procedure waiting period | 24 months of continuous coverage (36 months for joint replacement and age-related osteoarthritis) | Applies to: cataract and age-related eye ailments; hernia of all types; hydrocele; hysterectomy and fibroids; benign prostatic hypertrophy; calculus diseases (kidney/gall bladder stones); piles, fissure and fistula in ano; varicose veins; sinusitis and related disorders; ENT surgical disorders; benign tumours, cysts and polyps; joint replaceme",
+      "bbox": null,
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Waiting Period Schedule Table",
+          "source_text": "7 | Waiting periods | Initial 30 days; PED 36 months; specific diseases 24/36 months; moratorium 60 months",
+          "bbox": {
+            "x": 231.56,
+            "y": 285.22,
+            "width": 30.12,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "807",
+      "rule_key": "joint_replacement_waiting_period",
+      "name": "Joint Replacement Waiting Period",
+      "category": "waiting_period",
+      "original_value": "36 months for joint replacement",
       "value": 36.0,
       "normalized_value": 36.0,
       "unit": "months",
-      "formatted_value": "36 months continuous coverage",
-      "basis": null,
+      "formatted_value": "36 months for joint replacement",
+      "basis": "sum_insured",
       "frequency": null,
       "values": {
         "amount": 36.0,
@@ -277,25 +557,27 @@
           "type": "waiting_period",
           "value": 36.0,
           "unit": "months",
-          "basis": null,
+          "basis": "sum_insured",
           "frequency": null
         }
       ],
-      "conditions": [],
+      "conditions": [
+        "joint replacement and osteoarthritis"
+      ],
       "qualifiers": [
-        "continuous coverage"
+        "joint replacement and osteoarthritis"
       ],
       "exceptions": [],
-      "page": 2,
-      "section": "Pre-existing Diseases Clause",
-      "clause": "Pre-existing Diseases Clause",
-      "source_text": "3.3 Pre-Existing Diseases (PED): 36 months continuous coverage waiting period.",
+      "page": 9,
+      "section": null,
+      "clause": "Waiting Period Schedule Table",
+      "source_text": "Excl02 | Specific disease / procedure waiting period | 24 months of continuous coverage (36 months for joint replacement and age-related osteoarthritis) | Applies to: cataract and age-related eye ailments; hernia of all types; hydrocele; hysterectomy and fibroids; benign prostatic hypertrophy; calculus diseases (kidney/gall bladder stones); piles, fissure and fistula in ano; varicose veins; sinusitis and related disorders; ENT surgical disorders; benign tumours, cysts and polyps; joint replaceme",
       "bbox": {
-        "x": 68.35,
-        "y": 189.32,
-        "width": 59.29,
-        "height": 15.11,
-        "page": 2
+        "x": 192.09,
+        "y": 295.02,
+        "width": 65.48,
+        "height": 11.82,
+        "page": 9
       },
       "additional_sources": [],
       "status": "VERIFIED",
@@ -305,25 +587,25 @@
   "exclusions": [],
   "benefits": [
     {
-      "rule_id": "732",
+      "rule_id": "792",
       "rule_key": "sum_insured",
       "name": "Sum Insured",
       "category": "sum_insured",
-      "original_value": "₹500,000",
-      "value": 500000.0,
-      "normalized_value": 500000.0,
+      "original_value": "₹1,000,000",
+      "value": 1000000.0,
+      "normalized_value": 1000000.0,
       "unit": "INR",
-      "formatted_value": "₹500,000",
+      "formatted_value": "₹1,000,000",
       "basis": "sum_insured",
       "frequency": null,
       "values": {
-        "amount": 500000.0,
+        "amount": 1000000.0,
         "unit": "INR"
       },
       "limits": [
         {
           "type": "sum_insured",
-          "value": 500000.0,
+          "value": 1000000.0,
           "unit": "INR",
           "basis": "sum_insured",
           "frequency": null
@@ -331,26 +613,229 @@
       ],
       "conditions": [],
       "qualifiers": [
-        "individual"
+        "floater"
       ],
       "exceptions": [],
-      "page": 1,
+      "page": 2,
       "section": null,
-      "clause": "Policy Schedule",
-      "source_text": "Sum Insured: INR 5,00,000 (Five Lakh Rupees)",
+      "clause": "Policy Schedule Table",
+      "source_text": "Sum Insured (Floater) | Rs. 10,00,000",
       "bbox": {
-        "x": 50.0,
-        "y": 83.52,
-        "width": 62.36,
-        "height": 15.11,
-        "page": 1
+        "x": 56.02,
+        "y": 263.06,
+        "width": 52.09,
+        "height": 11.84,
+        "page": 2
       },
-      "additional_sources": [],
+      "additional_sources": [
+        {
+          "page": 17,
+          "clause": "Policy Schedule",
+          "source_text": "plate and screws at a network hospital. Sum Insured Rs. 10,00,000; opening cumulative bonus nil; no co-payment.",
+          "bbox": {
+            "x": 57.02,
+            "y": 125.27,
+            "width": 259.98,
+            "height": 12.64,
+            "page": 17
+          }
+        },
+        {
+          "page": 16,
+          "clause": "Policy Schedule Table",
+          "source_text": "4 | Sum insured (basis) | Rs. 10,00,000 floater; available options Rs. 5 lakh to Rs. 25 lakh",
+          "bbox": {
+            "x": 209.09,
+            "y": 197.02,
+            "width": 53.54,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
       "status": "VERIFIED",
       "confidence": "HIGH"
     },
     {
-      "rule_id": "736",
+      "rule_id": "799",
+      "rule_key": "domiciliary_sublimit",
+      "name": "Domiciliary Sublimit",
+      "category": "sub_limit",
+      "original_value": "Up to 10% of Sum Insured",
+      "value": 10.0,
+      "normalized_value": 10.0,
+      "unit": "percent_of_SI",
+      "formatted_value": "Up to 10% of Sum Insured",
+      "basis": "sum_insured",
+      "frequency": null,
+      "values": {
+        "amount": 10.0,
+        "unit": "percent_of_SI"
+      },
+      "limits": [
+        {
+          "type": "sub_limit",
+          "value": 10.0,
+          "unit": "percent_of_SI",
+          "basis": "sum_insured",
+          "frequency": null
+        }
+      ],
+      "conditions": [
+        "3 consecutive days minimum"
+      ],
+      "qualifiers": [
+        "3 consecutive days minimum"
+      ],
+      "exceptions": [
+        "asthma, bronchitis, tonsillitis, upper respiratory tract infection, arthritis, gout, diabetes mellitus, hypertension, influenza, cough and cold, and psychiatric disorders"
+      ],
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.5 | Domiciliary Hospitalisation | Treatment taken at home for at least 3 consecutive days where hospital admission is not possible due to the patient's condition or non-availability of a bed. Excludes asthma, bronchitis, tonsillitis, upper respiratory tract infection, arthritis, gout, diabetes mellitus, hypertension, influenza, cough and cold, and psychiatric disorders. | Up to 10% of Sum Insured",
+      "bbox": {
+        "x": 84.37,
+        "y": 353.82,
+        "width": 42.04,
+        "height": 11.82,
+        "page": 7
+      },
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "9 | Sub-limits | Domiciliary 10% of SI; modern treatment 50% of SI; ambulance Rs. 3,000; cataract Rs. 40,000 per eye; organ donor Rs. 1,00,000",
+          "bbox": {
+            "x": 253.48,
+            "y": 332.82,
+            "width": 17.21,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "801",
+      "rule_key": "modern_treatment_sublimit",
+      "name": "Modern Treatment Sublimit",
+      "category": "sub_limit",
+      "original_value": "Up to 50% of Sum Insured per policy year",
+      "value": 50.0,
+      "normalized_value": 50.0,
+      "unit": "percent_of_SI",
+      "formatted_value": "Up to 50% of Sum Insured per policy year",
+      "basis": "sum_insured",
+      "frequency": "per policy year",
+      "values": {
+        "amount": 50.0,
+        "unit": "percent_of_SI"
+      },
+      "limits": [
+        {
+          "type": "sub_limit",
+          "value": 50.0,
+          "unit": "percent_of_SI",
+          "basis": "sum_insured",
+          "frequency": "per policy year"
+        }
+      ],
+      "conditions": [],
+      "qualifiers": [
+        "per policy year"
+      ],
+      "exceptions": [],
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.8 | Modern Treatments | Uterine artery embolisation and HIFU; balloon sinuplasty; deep brain stimulation; oral chemotherapy; immunotherapy (monoclonal antibodies); intravitreal injections; robotic surgeries; stereotactic radio surgeries; bronchial thermoplasty; vaporisation of the prostate (Green laser treatment); IONM; stem cell therapy (haematopoietic). | Up to 50% of Sum Insured per policy year",
+      "bbox": {
+        "x": 84.37,
+        "y": 509.22,
+        "width": 75.04,
+        "height": 11.82,
+        "page": 7
+      },
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "9 | Sub-limits | Domiciliary 10% of SI; modern treatment 50% of SI; ambulance Rs. 3,000; cataract Rs. 40,000 per eye; organ donor Rs. 1,00,000",
+          "bbox": {
+            "x": 253.48,
+            "y": 332.82,
+            "width": 17.21,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "802",
+      "rule_key": "organ_donor_sublimit",
+      "name": "Organ Donor Sublimit",
+      "category": "sub_limit",
+      "original_value": "Up to ₹100,000",
+      "value": 100000.0,
+      "normalized_value": 100000.0,
+      "unit": "INR",
+      "formatted_value": "Up to ₹100,000",
+      "basis": null,
+      "frequency": null,
+      "values": {
+        "amount": 100000.0,
+        "unit": "INR"
+      },
+      "limits": [
+        {
+          "type": "sub_limit",
+          "value": 100000.0,
+          "unit": "INR",
+          "basis": null,
+          "frequency": null
+        }
+      ],
+      "conditions": [],
+      "qualifiers": [
+        "recipient under policy"
+      ],
+      "exceptions": [],
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.9 | Organ Donor Expenses | In-patient hospitalisation expenses of the organ donor for harvesting the organ, where the Insured Person is the recipient and the transplant is medically necessary and complies with the Transplantation of Human Organs Act, 1994. | Up to Rs. 1,00,000",
+      "bbox": {
+        "x": 84.37,
+        "y": 583.42,
+        "width": 49.71,
+        "height": 11.82,
+        "page": 7
+      },
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "9 | Sub-limits | Domiciliary 10% of SI; modern treatment 50% of SI; ambulance Rs. 3,000; cataract Rs. 40,000 per eye; organ donor Rs. 1,00,000",
+          "bbox": {
+            "x": 253.48,
+            "y": 332.82,
+            "width": 17.21,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "803",
       "rule_key": "cataract_sublimit",
       "name": "Cataract Sublimit",
       "category": "sub_limit",
@@ -379,80 +864,107 @@
         "per eye"
       ],
       "exceptions": [],
-      "page": 2,
-      "section": "Cataract Clause",
-      "clause": "Cataract Clause",
-      "source_text": "2.2 Cataract Surgery Sub-limit: INR 40,000 per eye.",
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.10 | Cataract Treatment | Cataract surgery including intra-ocular lens, after the specific waiting period. | Up to Rs. 40,000 per eye",
       "bbox": {
-        "x": 68.35,
-        "y": 68.4,
-        "width": 41.57,
-        "height": 15.11,
-        "page": 2
+        "x": 169.41,
+        "y": 313.22,
+        "width": 30.59,
+        "height": 11.82,
+        "page": 7
       },
-      "additional_sources": [],
-      "status": "VERIFIED",
-      "confidence": "HIGH"
-    },
-    {
-      "rule_id": "737",
-      "rule_key": "appendectomy_cap",
-      "name": "Appendectomy Cap",
-      "category": "sub_limit",
-      "original_value": "₹90,000 maximum cap",
-      "value": 90000.0,
-      "normalized_value": 90000.0,
-      "unit": "INR",
-      "formatted_value": "₹90,000 maximum cap",
-      "basis": null,
-      "frequency": null,
-      "values": {
-        "amount": 90000.0,
-        "unit": "INR"
-      },
-      "limits": [
+      "additional_sources": [
         {
-          "type": "sub_limit",
-          "value": 90000.0,
-          "unit": "INR",
-          "basis": null,
-          "frequency": null
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "9 | Sub-limits | Domiciliary 10% of SI; modern treatment 50% of SI; ambulance Rs. 3,000; cataract Rs. 40,000 per eye; organ donor Rs. 1,00,000",
+          "bbox": {
+            "x": 253.48,
+            "y": 332.82,
+            "width": 17.21,
+            "height": 11.82,
+            "page": 16
+          }
         }
       ],
-      "conditions": [],
-      "qualifiers": [
-        "maximum eligible claim"
-      ],
-      "exceptions": [],
-      "page": 2,
-      "section": "Appendectomy Clause",
-      "clause": "Appendectomy Clause",
-      "source_text": "2.3 Appendectomy & Hernia Procedure Cap: INR 90,000 maximum eligible claim.",
-      "bbox": {
-        "x": 68.35,
-        "y": 83.52,
-        "width": 73.37,
-        "height": 15.11,
-        "page": 2
-      },
-      "additional_sources": [],
       "status": "VERIFIED",
       "confidence": "HIGH"
     }
   ],
-  "restore_benefits": [],
+  "restore_benefits": [
+    {
+      "rule_id": "804",
+      "rule_key": "restore_benefit",
+      "name": "Restore Benefit",
+      "category": "restore_benefit",
+      "original_value": "100% of base Sum Insured once per policy year",
+      "value": 100.0,
+      "normalized_value": 100.0,
+      "unit": "percent",
+      "formatted_value": "100% of base Sum Insured once per policy year",
+      "basis": "base_si",
+      "frequency": "per policy year",
+      "values": {
+        "amount": 100.0,
+        "unit": "percent"
+      },
+      "limits": [
+        {
+          "type": "restore_benefit",
+          "value": 100.0,
+          "unit": "percent",
+          "basis": "base_si",
+          "frequency": "per policy year"
+        }
+      ],
+      "conditions": [],
+      "qualifiers": [
+        "once per policy year"
+      ],
+      "exceptions": [],
+      "page": 8,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "2.1 | Restore Benefit | If the Sum Insured is exhausted during the policy year, the Company will restore 100% of the base Sum Insured once during that year. Restored amount is not available for the same illness for which the Sum Insured was exhausted, but is available for any other illness or for the same illness in a later claim by another Insured Person. | 100% of base Sum Insured, once per policy year",
+      "bbox": {
+        "x": 84.37,
+        "y": 89.42,
+        "width": 59.27,
+        "height": 11.82,
+        "page": 8
+      },
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "5 | What the policy covers | In-patient hospitalisation; pre- (60 days) and post- (90 days) hospitalisation; day care; domiciliary; ambulance; AYUSH; modern treatments; organ donor; restore; cumulative bonus; health check-up (Part D)",
+          "bbox": {
+            "x": 327.16,
+            "y": 215.22,
+            "width": 30.12,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    }
+  ],
   "bonuses": [
     {
-      "rule_id": "733",
+      "rule_id": "793",
       "rule_key": "cumulative_bonus",
       "name": "Cumulative Bonus",
       "category": "cumulative_bonus",
-      "original_value": "10% per claim-free year",
+      "original_value": "10% per claim-free year (Max 100%)",
       "value": 10.0,
       "normalized_value": 10.0,
       "unit": "percent",
-      "formatted_value": "10% per claim-free year",
-      "basis": "sum_insured",
+      "formatted_value": "10% per claim-free year (Max 100%)",
+      "basis": "base_si",
       "frequency": "claim-free year",
       "values": {
         "increment": {
@@ -484,43 +996,92 @@
         "per claim-free year"
       ],
       "exceptions": [],
-      "page": 1,
-      "section": "Cumulative Bonus Clause",
-      "clause": "Cumulative Bonus Clause",
-      "source_text": "Cumulative Bonus: 10% per claim-free year",
+      "page": 8,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "2.2 | Cumulative Bonus | For every claim-free policy year, the Sum Insured increases by 10% of the base Sum Insured at renewal. If a claim is made in a later year, the bonus reduces by 10%. The bonus ",
       "bbox": {
-        "x": 50.0,
-        "y": 113.75,
-        "width": 89.25,
-        "height": 15.11,
-        "page": 1
+        "x": 84.37,
+        "y": 163.62,
+        "width": 69.78,
+        "height": 11.82,
+        "page": 8
       },
-      "additional_sources": [],
+      "additional_sources": [
+        {
+          "page": 2,
+          "clause": "Benefit Schedule Table",
+          "source_text": "Cumulative Bonus (opening) | Nil (new policy)",
+          "bbox": {
+            "x": 56.02,
+            "y": 281.26,
+            "width": 75.5,
+            "height": 11.84,
+            "page": 2
+          }
+        },
+        {
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "5 | What the policy covers | In-patient hospitalisation; pre- (60 days) and post- (90 days) hospitalisation; day care; domiciliary; ambulance; AYUSH; modern treatments; organ donor; restore; cumulativ",
+          "bbox": {
+            "x": 327.16,
+            "y": 215.22,
+            "width": 30.12,
+            "height": 11.82,
+            "page": 16
+          }
+        },
+        {
+          "page": 12,
+          "clause": "Cumulative Bonus Clause",
+          "source_text": "Continuity benefits (waiting periods, PED coverage, cumulative bonus) are preserved if the Policy is renewed within",
+          "bbox": {
+            "x": 57.02,
+            "y": 744.87,
+            "width": 251.39,
+            "height": 12.64,
+            "page": 12
+          }
+        },
+        {
+          "page": 17,
+          "clause": "Cumulative Bonus Clause",
+          "source_text": "plate and screws at a network hospital. Sum Insured Rs. 10,00,000; opening cumulative bonus nil; no co-payment.",
+          "bbox": {
+            "x": 57.02,
+            "y": 125.27,
+            "width": 259.98,
+            "height": 12.64,
+            "page": 17
+          }
+        }
+      ],
       "status": "VERIFIED",
       "confidence": "HIGH"
     }
   ],
   "rules": [
     {
-      "rule_id": "732",
+      "rule_id": "792",
       "rule_key": "sum_insured",
       "name": "Sum Insured",
       "category": "sum_insured",
-      "original_value": "₹500,000",
-      "value": 500000.0,
-      "normalized_value": 500000.0,
+      "original_value": "₹1,000,000",
+      "value": 1000000.0,
+      "normalized_value": 1000000.0,
       "unit": "INR",
-      "formatted_value": "₹500,000",
+      "formatted_value": "₹1,000,000",
       "basis": "sum_insured",
       "frequency": null,
       "values": {
-        "amount": 500000.0,
+        "amount": 1000000.0,
         "unit": "INR"
       },
       "limits": [
         {
           "type": "sum_insured",
-          "value": 500000.0,
+          "value": 1000000.0,
           "unit": "INR",
           "basis": "sum_insured",
           "frequency": null
@@ -528,35 +1089,60 @@
       ],
       "conditions": [],
       "qualifiers": [
-        "individual"
+        "floater"
       ],
       "exceptions": [],
-      "page": 1,
+      "page": 2,
       "section": null,
-      "clause": "Policy Schedule",
-      "source_text": "Sum Insured: INR 5,00,000 (Five Lakh Rupees)",
+      "clause": "Policy Schedule Table",
+      "source_text": "Sum Insured (Floater) | Rs. 10,00,000",
       "bbox": {
-        "x": 50.0,
-        "y": 83.52,
-        "width": 62.36,
-        "height": 15.11,
-        "page": 1
+        "x": 56.02,
+        "y": 263.06,
+        "width": 52.09,
+        "height": 11.84,
+        "page": 2
       },
-      "additional_sources": [],
+      "additional_sources": [
+        {
+          "page": 17,
+          "clause": "Policy Schedule",
+          "source_text": "plate and screws at a network hospital. Sum Insured Rs. 10,00,000; opening cumulative bonus nil; no co-payment.",
+          "bbox": {
+            "x": 57.02,
+            "y": 125.27,
+            "width": 259.98,
+            "height": 12.64,
+            "page": 17
+          }
+        },
+        {
+          "page": 16,
+          "clause": "Policy Schedule Table",
+          "source_text": "4 | Sum insured (basis) | Rs. 10,00,000 floater; available options Rs. 5 lakh to Rs. 25 lakh",
+          "bbox": {
+            "x": 209.09,
+            "y": 197.02,
+            "width": 53.54,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
       "status": "VERIFIED",
       "confidence": "HIGH"
     },
     {
-      "rule_id": "733",
+      "rule_id": "793",
       "rule_key": "cumulative_bonus",
       "name": "Cumulative Bonus",
       "category": "cumulative_bonus",
-      "original_value": "10% per claim-free year",
+      "original_value": "10% per claim-free year (Max 100%)",
       "value": 10.0,
       "normalized_value": 10.0,
       "unit": "percent",
-      "formatted_value": "10% per claim-free year",
-      "basis": "sum_insured",
+      "formatted_value": "10% per claim-free year (Max 100%)",
+      "basis": "base_si",
       "frequency": "claim-free year",
       "values": {
         "increment": {
@@ -588,201 +1174,304 @@
         "per claim-free year"
       ],
       "exceptions": [],
-      "page": 1,
-      "section": "Cumulative Bonus Clause",
-      "clause": "Cumulative Bonus Clause",
-      "source_text": "Cumulative Bonus: 10% per claim-free year",
+      "page": 8,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "2.2 | Cumulative Bonus | For every claim-free policy year, the Sum Insured increases by 10% of the base Sum Insured at renewal. If a claim is made in a later year, the bonus reduces by 10%. The bonus ",
       "bbox": {
-        "x": 50.0,
-        "y": 113.75,
-        "width": 89.25,
-        "height": 15.11,
-        "page": 1
+        "x": 84.37,
+        "y": 163.62,
+        "width": 69.78,
+        "height": 11.82,
+        "page": 8
       },
-      "additional_sources": [],
-      "status": "VERIFIED",
-      "confidence": "HIGH"
-    },
-    {
-      "rule_id": "734",
-      "rule_key": "room_category",
-      "name": "Room Category",
-      "category": "room_rent_limit",
-      "original_value": "₹5,000/day (1% of Sum Insured)",
-      "value": 5000.0,
-      "normalized_value": 5000.0,
-      "unit": "INR_per_day",
-      "formatted_value": "₹5,000/day (1% of Sum Insured)",
-      "basis": "sum_insured",
-      "frequency": null,
-      "values": {
-        "cap_amount": 5000.0,
-        "category": "cap_₹5,000/day"
-      },
-      "limits": [
+      "additional_sources": [
         {
-          "type": "room_rent_limit",
-          "value": 5000.0,
-          "unit": "INR_per_day",
-          "qualifier": "cap_₹5,000/day"
+          "page": 2,
+          "clause": "Benefit Schedule Table",
+          "source_text": "Cumulative Bonus (opening) | Nil (new policy)",
+          "bbox": {
+            "x": 56.02,
+            "y": 281.26,
+            "width": 75.5,
+            "height": 11.84,
+            "page": 2
+          }
+        },
+        {
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "5 | What the policy covers | In-patient hospitalisation; pre- (60 days) and post- (90 days) hospitalisation; day care; domiciliary; ambulance; AYUSH; modern treatments; organ donor; restore; cumulativ",
+          "bbox": {
+            "x": 327.16,
+            "y": 215.22,
+            "width": 30.12,
+            "height": 11.82,
+            "page": 16
+          }
+        },
+        {
+          "page": 12,
+          "clause": "Cumulative Bonus Clause",
+          "source_text": "Continuity benefits (waiting periods, PED coverage, cumulative bonus) are preserved if the Policy is renewed within",
+          "bbox": {
+            "x": 57.02,
+            "y": 744.87,
+            "width": 251.39,
+            "height": 12.64,
+            "page": 12
+          }
+        },
+        {
+          "page": 17,
+          "clause": "Cumulative Bonus Clause",
+          "source_text": "plate and screws at a network hospital. Sum Insured Rs. 10,00,000; opening cumulative bonus nil; no co-payment.",
+          "bbox": {
+            "x": 57.02,
+            "y": 125.27,
+            "width": 259.98,
+            "height": 12.64,
+            "page": 17
+          }
         }
       ],
-      "conditions": [],
-      "qualifiers": [
-        "cap_₹5,000/day"
-      ],
-      "exceptions": [],
-      "page": 1,
-      "section": "In-patient Hospitalisation Clause",
-      "clause": "In-patient Hospitalisation Clause",
-      "source_text": "1.2 Room Rent Limit: Capped at 1% of Sum Insured per day (INR 5,000/day) for Standard Single Room.",
-      "bbox": {
-        "x": 50.0,
-        "y": 174.2,
-        "width": 213.98,
-        "height": 15.11,
-        "page": 1
-      },
-      "additional_sources": [],
       "status": "VERIFIED",
       "confidence": "HIGH"
     },
     {
-      "rule_id": "735",
+      "rule_id": "794",
       "rule_key": "copay",
       "name": "Copay",
       "category": "copay",
-      "original_value": "10%",
-      "value": 10.0,
-      "normalized_value": 10.0,
+      "original_value": "0% (Nil)",
+      "value": 0.0,
+      "normalized_value": 0.0,
       "unit": "percent",
-      "formatted_value": "10%",
+      "formatted_value": "0% (Nil)",
       "basis": null,
       "frequency": null,
       "values": {
-        "rate": 10.0,
+        "rate": 0.0,
         "unit": "percent"
       },
       "limits": [
         {
           "type": "copayment_rate",
-          "value": 10.0,
+          "value": 0.0,
           "unit": "percent",
           "basis": "admissible_claims"
         }
       ],
       "conditions": [],
       "qualifiers": [
-        "mandatory co-payment"
+        "no co-payment"
       ],
       "exceptions": [],
       "page": 2,
-      "section": "Co-payment Clause",
-      "clause": "Co-payment Clause",
-      "source_text": "2.1 Mandatory Co-Payment: A mandatory co-payment of 10% applies to all eligible claims.",
+      "section": null,
+      "clause": "Co-payment Schedule",
+      "source_text": "Co-payment | Nil (no co-payment on any claim)",
       "bbox": {
-        "x": 114.18,
-        "y": 38.17,
-        "width": 73.34,
-        "height": 15.11,
+        "x": 56.02,
+        "y": 299.46,
+        "width": 49.69,
+        "height": 11.84,
         "page": 2
       },
-      "additional_sources": [],
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Co-payment Schedule",
+          "source_text": "8 | Co-payment | Nil",
+          "bbox": {
+            "x": 78.7,
+            "y": 314.62,
+            "width": 46.84,
+            "height": 11.82,
+            "page": 16
+          }
+        },
+        {
+          "page": 8,
+          "clause": "Co-payment Clause",
+          "source_text": "Co-payment: This plan has no co-payment. The full admissible claim is payable up to the Sum Insured and",
+          "bbox": {
+            "x": 71.02,
+            "y": 318.07,
+            "width": 272.34,
+            "height": 12.71,
+            "page": 8
+          }
+        },
+        {
+          "page": 17,
+          "clause": "Co-payment Clause",
+          "source_text": "plate and screws at a network hospital. Sum Insured Rs. 10,00,000; opening cumulative bonus nil; no co-payment.",
+          "bbox": {
+            "x": 57.02,
+            "y": 125.27,
+            "width": 259.98,
+            "height": 12.64,
+            "page": 17
+          }
+        }
+      ],
       "status": "VERIFIED",
       "confidence": "HIGH"
     },
     {
-      "rule_id": "736",
-      "rule_key": "cataract_sublimit",
-      "name": "Cataract Sublimit",
-      "category": "sub_limit",
-      "original_value": "₹40,000 per eye",
-      "value": 40000.0,
-      "normalized_value": 40000.0,
-      "unit": "INR",
-      "formatted_value": "₹40,000 per eye",
-      "basis": null,
-      "frequency": "per eye",
+      "rule_id": "795",
+      "rule_key": "room_category",
+      "name": "Room Category",
+      "category": "room_rent_limit",
+      "original_value": "Single Private A/C Room (No Cap)",
+      "value": null,
+      "normalized_value": null,
+      "unit": "category",
+      "formatted_value": "Single Private A/C Room (No Cap)",
+      "basis": "sum_insured",
+      "frequency": null,
       "values": {
-        "amount": 40000.0,
-        "unit": "INR"
+        "cap_amount": null,
+        "category": "no cap"
       },
       "limits": [
         {
-          "type": "sub_limit",
-          "value": 40000.0,
-          "unit": "INR",
-          "basis": null,
-          "frequency": "per eye"
+          "type": "room_rent_limit",
+          "value": null,
+          "unit": "category",
+          "qualifier": "no cap"
         }
       ],
       "conditions": [],
       "qualifiers": [
-        "per eye"
+        "no cap"
       ],
       "exceptions": [],
       "page": 2,
-      "section": "Cataract Clause",
-      "clause": "Cataract Clause",
-      "source_text": "2.2 Cataract Surgery Sub-limit: INR 40,000 per eye.",
+      "section": null,
+      "clause": "Room Entitlement Table",
+      "source_text": "Zone / Room Category | Zone B (Pune) / Single private A/C room",
       "bbox": {
-        "x": 68.35,
-        "y": 68.4,
-        "width": 41.57,
-        "height": 15.11,
+        "x": 83.74,
+        "y": 317.66,
+        "width": 64.03,
+        "height": 11.84,
         "page": 2
       },
-      "additional_sources": [],
+      "additional_sources": [
+        {
+          "page": 6,
+          "clause": "Room Entitlement Table",
+          "source_text": "39 | Room Rent | The amount charged by a Hospital towards room and boarding expenses and shall include the associated medical expenses.",
+          "bbox": {
+            "x": 84.37,
+            "y": 414.26,
+            "width": 45.86,
+            "height": 11.84,
+            "page": 6
+          }
+        },
+        {
+          "page": 7,
+          "clause": "Room Entitlement Table",
+          "source_text": "1.1 | In-patient Hospitalisation | Room rent, boarding and nursing charges; Medical Practitioner, surgeon and anaesthetist fees; operation theatre charges; investigations and diagnostics during stay; medicines, drugs, consumables, implants and blood; oxygen, dialysis, chemotherapy, radiotherapy. | Up to Sum Insured. Room rent: single private A/C room (no cap). ICU: actuals.",
+          "bbox": {
+            "x": 169.41,
+            "y": 180.22,
+            "width": 40.14,
+            "height": 11.82,
+            "page": 7
+          }
+        },
+        {
+          "page": 17,
+          "clause": "Room Entitlement Table",
+          "source_text": "Room rent, nursing and OT charges | 92,000 | Single private A/C room: no cap",
+          "bbox": {
+            "x": 56.02,
+            "y": 212.62,
+            "width": 40.14,
+            "height": 11.82,
+            "page": 17
+          }
+        }
+      ],
       "status": "VERIFIED",
       "confidence": "HIGH"
     },
     {
-      "rule_id": "737",
-      "rule_key": "appendectomy_cap",
-      "name": "Appendectomy Cap",
-      "category": "sub_limit",
-      "original_value": "₹90,000 maximum cap",
-      "value": 90000.0,
-      "normalized_value": 90000.0,
-      "unit": "INR",
-      "formatted_value": "₹90,000 maximum cap",
+      "rule_id": "796",
+      "rule_key": "ped_waiting_period",
+      "name": "Ped Waiting Period",
+      "category": "waiting_period",
+      "original_value": "36 months continuous coverage",
+      "value": 36.0,
+      "normalized_value": 36.0,
+      "unit": "months",
+      "formatted_value": "36 months continuous coverage",
       "basis": null,
       "frequency": null,
       "values": {
-        "amount": 90000.0,
-        "unit": "INR"
+        "amount": 36.0,
+        "unit": "months"
       },
       "limits": [
         {
-          "type": "sub_limit",
-          "value": 90000.0,
-          "unit": "INR",
+          "type": "waiting_period",
+          "value": 36.0,
+          "unit": "months",
           "basis": null,
           "frequency": null
         }
       ],
       "conditions": [],
       "qualifiers": [
-        "maximum eligible claim"
+        "continuous coverage"
       ],
       "exceptions": [],
-      "page": 2,
-      "section": "Appendectomy Clause",
-      "clause": "Appendectomy Clause",
-      "source_text": "2.3 Appendectomy & Hernia Procedure Cap: INR 90,000 maximum eligible claim.",
+      "page": 9,
+      "section": null,
+      "clause": "Waiting Period Schedule Table",
+      "source_text": "Excl01 | Pre-existing diseases (PED) | 36 months of continuous coverage | Expenses for treatment of PED and its direct complications are payable only after 36 months of continuous coverage. Any PED not declared, or declared later, is subject to the same waiting period from the date of declaration and acceptance.",
       "bbox": {
-        "x": 68.35,
-        "y": 83.52,
-        "width": 73.37,
-        "height": 15.11,
-        "page": 2
+        "x": 60.09,
+        "y": 108.27,
+        "width": 27.61,
+        "height": 12.64,
+        "page": 9
       },
-      "additional_sources": [],
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Waiting Period Schedule Table",
+          "source_text": "7 | Waiting periods | Initial 30 days; PED 36 months; specific diseases 24/36 months; moratorium 60 months",
+          "bbox": {
+            "x": 231.56,
+            "y": 285.22,
+            "width": 30.12,
+            "height": 11.82,
+            "page": 16
+          }
+        },
+        {
+          "page": 2,
+          "clause": "Pre-existing Diseases Clause",
+          "source_text": "Pre-existing diseases declared above are covered after the waiting period in Part E (36 months of continuous",
+          "bbox": {
+            "x": 71.02,
+            "y": 694.87,
+            "width": 261.48,
+            "height": 12.64,
+            "page": 2
+          }
+        }
+      ],
       "status": "VERIFIED",
       "confidence": "HIGH"
     },
     {
-      "rule_id": "738",
+      "rule_id": "797",
       "rule_key": "pre_hospitalisation",
       "name": "Pre Hospitalisation",
       "category": "sub_limit",
@@ -811,23 +1500,23 @@
         "within Sum Insured"
       ],
       "exceptions": [],
-      "page": 2,
-      "section": "Pre-Hospitalisation Clause",
-      "clause": "Pre-Hospitalisation Clause",
-      "source_text": "2.4 Pre-Hospitalization: Covered up to 60 days prior to admission.",
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.2 | Pre-Hospitalisation | Medical expenses incurred for the same illness/injury in the period immediately before admission. | Up to 60 days, within Sum Insured",
       "bbox": {
-        "x": 68.35,
-        "y": 98.63,
-        "width": 92.3,
-        "height": 15.11,
-        "page": 2
+        "x": 84.37,
+        "y": 243.22,
+        "width": 72.16,
+        "height": 11.82,
+        "page": 7
       },
       "additional_sources": [],
       "status": "VERIFIED",
       "confidence": "HIGH"
     },
     {
-      "rule_id": "739",
+      "rule_id": "798",
       "rule_key": "post_hospitalisation",
       "name": "Post Hospitalisation",
       "category": "sub_limit",
@@ -836,7 +1525,7 @@
       "normalized_value": 90.0,
       "unit": "days",
       "formatted_value": "Up to 90 days",
-      "basis": null,
+      "basis": "sum_insured",
       "frequency": null,
       "values": {
         "amount": 90.0,
@@ -847,7 +1536,7 @@
           "type": "sub_limit",
           "value": 90.0,
           "unit": "days",
-          "basis": null,
+          "basis": "sum_insured",
           "frequency": null
         }
       ],
@@ -856,23 +1545,375 @@
         "within Sum Insured"
       ],
       "exceptions": [],
-      "page": 2,
-      "section": "Post-Hospitalisation Clause",
-      "clause": "Post-Hospitalisation Clause",
-      "source_text": "2.5 Post-Hospitalization: Covered up to 90 days following discharge.",
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.3 | Post-Hospitalisatio n | Medical expenses incurred for the same illness/injury in the period immediately after discharge. | Up to 90 days, within Sum Insured",
       "bbox": {
-        "x": 68.35,
-        "y": 113.75,
-        "width": 97.2,
-        "height": 15.11,
-        "page": 2
+        "x": 84.37,
+        "y": 272.62,
+        "width": 20.07,
+        "height": 11.82,
+        "page": 7
       },
       "additional_sources": [],
       "status": "VERIFIED",
       "confidence": "HIGH"
     },
     {
-      "rule_id": "740",
+      "rule_id": "799",
+      "rule_key": "domiciliary_sublimit",
+      "name": "Domiciliary Sublimit",
+      "category": "sub_limit",
+      "original_value": "Up to 10% of Sum Insured",
+      "value": 10.0,
+      "normalized_value": 10.0,
+      "unit": "percent_of_SI",
+      "formatted_value": "Up to 10% of Sum Insured",
+      "basis": "sum_insured",
+      "frequency": null,
+      "values": {
+        "amount": 10.0,
+        "unit": "percent_of_SI"
+      },
+      "limits": [
+        {
+          "type": "sub_limit",
+          "value": 10.0,
+          "unit": "percent_of_SI",
+          "basis": "sum_insured",
+          "frequency": null
+        }
+      ],
+      "conditions": [
+        "3 consecutive days minimum"
+      ],
+      "qualifiers": [
+        "3 consecutive days minimum"
+      ],
+      "exceptions": [
+        "asthma, bronchitis, tonsillitis, upper respiratory tract infection, arthritis, gout, diabetes mellitus, hypertension, influenza, cough and cold, and psychiatric disorders"
+      ],
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.5 | Domiciliary Hospitalisation | Treatment taken at home for at least 3 consecutive days where hospital admission is not possible due to the patient's condition or non-availability of a bed. Excludes asthma, bronchitis, tonsillitis, upper respiratory tract infection, arthritis, gout, diabetes mellitus, hypertension, influenza, cough and cold, and psychiatric disorders. | Up to 10% of Sum Insured",
+      "bbox": {
+        "x": 84.37,
+        "y": 353.82,
+        "width": 42.04,
+        "height": 11.82,
+        "page": 7
+      },
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "9 | Sub-limits | Domiciliary 10% of SI; modern treatment 50% of SI; ambulance Rs. 3,000; cataract Rs. 40,000 per eye; organ donor Rs. 1,00,000",
+          "bbox": {
+            "x": 253.48,
+            "y": 332.82,
+            "width": 17.21,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "800",
+      "rule_key": "ambulance_sublimit",
+      "name": "Ambulance Sublimit",
+      "category": "sub_limit",
+      "original_value": "Up to ₹3,000 per hospitalisation",
+      "value": 3000.0,
+      "normalized_value": 3000.0,
+      "unit": "INR",
+      "formatted_value": "Up to ₹3,000 per hospitalisation",
+      "basis": null,
+      "frequency": "per hospitalisation",
+      "values": {
+        "amount": 3000.0,
+        "unit": "INR"
+      },
+      "limits": [
+        {
+          "type": "sub_limit",
+          "value": 3000.0,
+          "unit": "INR",
+          "basis": null,
+          "frequency": "per hospitalisation"
+        }
+      ],
+      "conditions": [],
+      "qualifiers": [
+        "per hospitalisation"
+      ],
+      "exceptions": [],
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.6 | Road Ambulance | Reasonable cost of ambulance to take the Insured Person to the Hospital in an emergency, or to transfer to another Hospital. | Up to Rs. 3,000 per hospitalisation",
+      "bbox": {
+        "x": 84.37,
+        "y": 428.02,
+        "width": 65.96,
+        "height": 11.82,
+        "page": 7
+      },
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "9 | Sub-limits | Domiciliary 10% of SI; modern treatment 50% of SI; ambulance Rs. 3,000; cataract Rs. 40,000 per eye; organ donor Rs. 1,00,000",
+          "bbox": {
+            "x": 253.48,
+            "y": 332.82,
+            "width": 17.21,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "801",
+      "rule_key": "modern_treatment_sublimit",
+      "name": "Modern Treatment Sublimit",
+      "category": "sub_limit",
+      "original_value": "Up to 50% of Sum Insured per policy year",
+      "value": 50.0,
+      "normalized_value": 50.0,
+      "unit": "percent_of_SI",
+      "formatted_value": "Up to 50% of Sum Insured per policy year",
+      "basis": "sum_insured",
+      "frequency": "per policy year",
+      "values": {
+        "amount": 50.0,
+        "unit": "percent_of_SI"
+      },
+      "limits": [
+        {
+          "type": "sub_limit",
+          "value": 50.0,
+          "unit": "percent_of_SI",
+          "basis": "sum_insured",
+          "frequency": "per policy year"
+        }
+      ],
+      "conditions": [],
+      "qualifiers": [
+        "per policy year"
+      ],
+      "exceptions": [],
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.8 | Modern Treatments | Uterine artery embolisation and HIFU; balloon sinuplasty; deep brain stimulation; oral chemotherapy; immunotherapy (monoclonal antibodies); intravitreal injections; robotic surgeries; stereotactic radio surgeries; bronchial thermoplasty; vaporisation of the prostate (Green laser treatment); IONM; stem cell therapy (haematopoietic). | Up to 50% of Sum Insured per policy year",
+      "bbox": {
+        "x": 84.37,
+        "y": 509.22,
+        "width": 75.04,
+        "height": 11.82,
+        "page": 7
+      },
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "9 | Sub-limits | Domiciliary 10% of SI; modern treatment 50% of SI; ambulance Rs. 3,000; cataract Rs. 40,000 per eye; organ donor Rs. 1,00,000",
+          "bbox": {
+            "x": 253.48,
+            "y": 332.82,
+            "width": 17.21,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "802",
+      "rule_key": "organ_donor_sublimit",
+      "name": "Organ Donor Sublimit",
+      "category": "sub_limit",
+      "original_value": "Up to ₹100,000",
+      "value": 100000.0,
+      "normalized_value": 100000.0,
+      "unit": "INR",
+      "formatted_value": "Up to ₹100,000",
+      "basis": null,
+      "frequency": null,
+      "values": {
+        "amount": 100000.0,
+        "unit": "INR"
+      },
+      "limits": [
+        {
+          "type": "sub_limit",
+          "value": 100000.0,
+          "unit": "INR",
+          "basis": null,
+          "frequency": null
+        }
+      ],
+      "conditions": [],
+      "qualifiers": [
+        "recipient under policy"
+      ],
+      "exceptions": [],
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.9 | Organ Donor Expenses | In-patient hospitalisation expenses of the organ donor for harvesting the organ, where the Insured Person is the recipient and the transplant is medically necessary and complies with the Transplantation of Human Organs Act, 1994. | Up to Rs. 1,00,000",
+      "bbox": {
+        "x": 84.37,
+        "y": 583.42,
+        "width": 49.71,
+        "height": 11.82,
+        "page": 7
+      },
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "9 | Sub-limits | Domiciliary 10% of SI; modern treatment 50% of SI; ambulance Rs. 3,000; cataract Rs. 40,000 per eye; organ donor Rs. 1,00,000",
+          "bbox": {
+            "x": 253.48,
+            "y": 332.82,
+            "width": 17.21,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "803",
+      "rule_key": "cataract_sublimit",
+      "name": "Cataract Sublimit",
+      "category": "sub_limit",
+      "original_value": "₹40,000 per eye",
+      "value": 40000.0,
+      "normalized_value": 40000.0,
+      "unit": "INR",
+      "formatted_value": "₹40,000 per eye",
+      "basis": null,
+      "frequency": "per eye",
+      "values": {
+        "amount": 40000.0,
+        "unit": "INR"
+      },
+      "limits": [
+        {
+          "type": "sub_limit",
+          "value": 40000.0,
+          "unit": "INR",
+          "basis": null,
+          "frequency": "per eye"
+        }
+      ],
+      "conditions": [],
+      "qualifiers": [
+        "per eye"
+      ],
+      "exceptions": [],
+      "page": 7,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "1.10 | Cataract Treatment | Cataract surgery including intra-ocular lens, after the specific waiting period. | Up to Rs. 40,000 per eye",
+      "bbox": {
+        "x": 169.41,
+        "y": 313.22,
+        "width": 30.59,
+        "height": 11.82,
+        "page": 7
+      },
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "9 | Sub-limits | Domiciliary 10% of SI; modern treatment 50% of SI; ambulance Rs. 3,000; cataract Rs. 40,000 per eye; organ donor Rs. 1,00,000",
+          "bbox": {
+            "x": 253.48,
+            "y": 332.82,
+            "width": 17.21,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "804",
+      "rule_key": "restore_benefit",
+      "name": "Restore Benefit",
+      "category": "restore_benefit",
+      "original_value": "100% of base Sum Insured once per policy year",
+      "value": 100.0,
+      "normalized_value": 100.0,
+      "unit": "percent",
+      "formatted_value": "100% of base Sum Insured once per policy year",
+      "basis": "base_si",
+      "frequency": "per policy year",
+      "values": {
+        "amount": 100.0,
+        "unit": "percent"
+      },
+      "limits": [
+        {
+          "type": "restore_benefit",
+          "value": 100.0,
+          "unit": "percent",
+          "basis": "base_si",
+          "frequency": "per policy year"
+        }
+      ],
+      "conditions": [],
+      "qualifiers": [
+        "once per policy year"
+      ],
+      "exceptions": [],
+      "page": 8,
+      "section": null,
+      "clause": "Benefit Schedule Table",
+      "source_text": "2.1 | Restore Benefit | If the Sum Insured is exhausted during the policy year, the Company will restore 100% of the base Sum Insured once during that year. Restored amount is not available for the same illness for which the Sum Insured was exhausted, but is available for any other illness or for the same illness in a later claim by another Insured Person. | 100% of base Sum Insured, once per policy year",
+      "bbox": {
+        "x": 84.37,
+        "y": 89.42,
+        "width": 59.27,
+        "height": 11.82,
+        "page": 8
+      },
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Benefit Schedule Table",
+          "source_text": "5 | What the policy covers | In-patient hospitalisation; pre- (60 days) and post- (90 days) hospitalisation; day care; domiciliary; ambulance; AYUSH; modern treatments; organ donor; restore; cumulative bonus; health check-up (Part D)",
+          "bbox": {
+            "x": 327.16,
+            "y": 215.22,
+            "width": 30.12,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "805",
       "rule_key": "initial_waiting_period",
       "name": "Initial Waiting Period",
       "category": "waiting_period",
@@ -903,32 +1944,86 @@
         "illness from policy inception"
       ],
       "exceptions": [],
-      "page": 2,
-      "section": "Initial Waiting Period Clause",
-      "clause": "Initial Waiting Period Clause",
-      "source_text": "3.1 Initial Waiting Period: 30 days from policy inception (except accidental injuries).",
+      "page": 9,
+      "section": null,
+      "clause": "Waiting Period Schedule Table",
+      "source_text": "Excl03 | Initial waiting period | 30 days from first policy start date | No claim is payable for illness contracted during the first 30 days of the first policy. Not applicable to injury caused by an accident, or on renewal.",
       "bbox": {
-        "x": 68.35,
-        "y": 159.09,
-        "width": 100.25,
-        "height": 15.11,
-        "page": 2
+        "x": 95.71,
+        "y": 180.22,
+        "width": 75.52,
+        "height": 11.82,
+        "page": 9
       },
       "additional_sources": [],
       "status": "VERIFIED",
       "confidence": "HIGH"
     },
     {
-      "rule_id": "741",
-      "rule_key": "ped_waiting_period",
-      "name": "Ped Waiting Period",
+      "rule_id": "806",
+      "rule_key": "specific_disease_waiting_period",
+      "name": "Specific Disease Waiting Period",
       "category": "waiting_period",
-      "original_value": "36 months continuous coverage",
+      "original_value": "24 months continuous coverage",
+      "value": 24.0,
+      "normalized_value": 24.0,
+      "unit": "months",
+      "formatted_value": "24 months continuous coverage",
+      "basis": "sum_insured",
+      "frequency": null,
+      "values": {
+        "amount": 24.0,
+        "unit": "months"
+      },
+      "limits": [
+        {
+          "type": "waiting_period",
+          "value": 24.0,
+          "unit": "months",
+          "basis": "sum_insured",
+          "frequency": null
+        }
+      ],
+      "conditions": [
+        "joint replacement and osteoarthritis"
+      ],
+      "qualifiers": [
+        "continuous coverage"
+      ],
+      "exceptions": [],
+      "page": 9,
+      "section": null,
+      "clause": "Waiting Period Schedule Table",
+      "source_text": "Excl02 | Specific disease / procedure waiting period | 24 months of continuous coverage (36 months for joint replacement and age-related osteoarthritis) | Applies to: cataract and age-related eye ailments; hernia of all types; hydrocele; hysterectomy and fibroids; benign prostatic hypertrophy; calculus diseases (kidney/gall bladder stones); piles, fissure and fistula in ano; varicose veins; sinusitis and related disorders; ENT surgical disorders; benign tumours, cysts and polyps; joint replaceme",
+      "bbox": null,
+      "additional_sources": [
+        {
+          "page": 16,
+          "clause": "Waiting Period Schedule Table",
+          "source_text": "7 | Waiting periods | Initial 30 days; PED 36 months; specific diseases 24/36 months; moratorium 60 months",
+          "bbox": {
+            "x": 231.56,
+            "y": 285.22,
+            "width": 30.12,
+            "height": 11.82,
+            "page": 16
+          }
+        }
+      ],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "807",
+      "rule_key": "joint_replacement_waiting_period",
+      "name": "Joint Replacement Waiting Period",
+      "category": "waiting_period",
+      "original_value": "36 months for joint replacement",
       "value": 36.0,
       "normalized_value": 36.0,
       "unit": "months",
-      "formatted_value": "36 months continuous coverage",
-      "basis": null,
+      "formatted_value": "36 months for joint replacement",
+      "basis": "sum_insured",
       "frequency": null,
       "values": {
         "amount": 36.0,
@@ -939,25 +2034,27 @@
           "type": "waiting_period",
           "value": 36.0,
           "unit": "months",
-          "basis": null,
+          "basis": "sum_insured",
           "frequency": null
         }
       ],
-      "conditions": [],
+      "conditions": [
+        "joint replacement and osteoarthritis"
+      ],
       "qualifiers": [
-        "continuous coverage"
+        "joint replacement and osteoarthritis"
       ],
       "exceptions": [],
-      "page": 2,
-      "section": "Pre-existing Diseases Clause",
-      "clause": "Pre-existing Diseases Clause",
-      "source_text": "3.3 Pre-Existing Diseases (PED): 36 months continuous coverage waiting period.",
+      "page": 9,
+      "section": null,
+      "clause": "Waiting Period Schedule Table",
+      "source_text": "Excl02 | Specific disease / procedure waiting period | 24 months of continuous coverage (36 months for joint replacement and age-related osteoarthritis) | Applies to: cataract and age-related eye ailments; hernia of all types; hydrocele; hysterectomy and fibroids; benign prostatic hypertrophy; calculus diseases (kidney/gall bladder stones); piles, fissure and fistula in ano; varicose veins; sinusitis and related disorders; ENT surgical disorders; benign tumours, cysts and polyps; joint replaceme",
       "bbox": {
-        "x": 68.35,
-        "y": 189.32,
-        "width": 59.29,
-        "height": 15.11,
-        "page": 2
+        "x": 192.09,
+        "y": 295.02,
+        "width": 65.48,
+        "height": 11.82,
+        "page": 9
       },
       "additional_sources": [],
       "status": "VERIFIED",
@@ -966,13 +2063,13 @@
   ],
   "metadata": {
     "source_type": "uploaded_policy_pdf",
-    "original_filename": "sample_health_policy.pdf",
-    "file_path": "C:\\Users\\kgbag\\OneDrive\\Desktop\\HACKMATRIX\\Spasth\\backend\\uploads\\2ec4c40f-2b45-4fe7-8c85-d65b1faeb9d4_sample_health_policy.pdf",
-    "file_size_bytes": 2943,
-    "page_count": 3,
-    "generated_at": "2026-10-10T18:24:45.184231Z",
+    "original_filename": "Sample_Health_Insurance_Policy.pdf",
+    "file_path": "C:\\Users\\kgbag\\OneDrive\\Desktop\\HACKMATRIX\\Spasth\\backend\\uploads\\3afaa05b-3716-4818-bd35-67d73ad9c1a2_Sample_Health_Insurance_Policy.pdf",
+    "file_size_bytes": 57582,
+    "page_count": 17,
+    "generated_at": "2026-10-10T19:51:38.415786Z",
     "schema_version": "1.0",
-    "rules_count": 10,
+    "rules_count": 16,
     "verification_status": "VERIFIED"
   }
 }
