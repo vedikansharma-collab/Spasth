@@ -62,6 +62,34 @@ def get_policy_page(policy_id: str, page_number: int):
         )
     return page
 
+@router.get("/canonical/current")
+def get_current_canonical_policy():
+    """
+    GET /api/policies/canonical/current
+    Returns the current canonical policy JSON extracted and exported from the most recent policy.
+    """
+    data = PolicyService.get_canonical_json()
+    if not data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No canonical policy JSON available yet. Please upload a policy first."
+        )
+    return data
+
+@router.get("/{policy_id}/canonical")
+def get_policy_canonical(policy_id: str):
+    """
+    GET /api/policies/{policy_id}/canonical
+    Retrieves the canonical structured JSON representation for a specific policy ID.
+    """
+    data = PolicyService.get_canonical_json(policy_id)
+    if not data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Policy with ID '{policy_id}' not found."
+        )
+    return data
+
 @router.post("/{policy_id}/ask", response_model=PolicyAskResponse)
 def ask_policy(policy_id: str, request: PolicyAskRequest):
     """

@@ -95,6 +95,24 @@ def init_db():
         """)
 
         # Add optional columns if migrating an older database
+        cursor.execute("PRAGMA table_info(policy_rules);")
+        rule_columns = [col["name"] for col in cursor.fetchall()]
+        if "qualifiers" not in rule_columns:
+            cursor.execute("ALTER TABLE policy_rules ADD COLUMN qualifiers TEXT;")
+        if "bbox" not in rule_columns:
+            cursor.execute("ALTER TABLE policy_rules ADD COLUMN bbox TEXT;")
+        if "additional_sources" not in rule_columns:
+            cursor.execute("ALTER TABLE policy_rules ADD COLUMN additional_sources TEXT;")
+        if "status" not in rule_columns:
+            cursor.execute("ALTER TABLE policy_rules ADD COLUMN status TEXT DEFAULT 'VERIFIED';")
+        if "formatted_value" not in rule_columns:
+            cursor.execute("ALTER TABLE policy_rules ADD COLUMN formatted_value TEXT;")
+
+        cursor.execute("PRAGMA table_info(policy_pages);")
+        page_columns = [col["name"] for col in cursor.fetchall()]
+        if "layout_data" not in page_columns:
+            cursor.execute("ALTER TABLE policy_pages ADD COLUMN layout_data TEXT;")
+
         cursor.execute("PRAGMA table_info(treatment_costs);")
         columns = [col["name"] for col in cursor.fetchall()]
         if "procedure_code" not in columns:

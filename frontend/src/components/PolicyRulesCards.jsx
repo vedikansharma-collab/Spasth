@@ -25,11 +25,29 @@ export default function PolicyRulesCards({ rules, onCitationClick }) {
     }
   };
 
+  const hasConflict = rules.some(r => r.status === 'CONFLICT');
+  const hasNeedsReview = rules.some(r => r.status === 'NEEDS_REVIEW');
+  const isFullyGrounded = !hasConflict && !hasNeedsReview && rules.length > 0 && rules.every(r => r.status === 'VERIFIED');
+  
+  const groundingLabel = hasConflict 
+    ? 'Conflict Detected' 
+    : hasNeedsReview 
+      ? 'Review Recommended' 
+      : isFullyGrounded 
+        ? '100% Citation Grounded' 
+        : 'Citations Grounded';
+        
+  const groundingColor = hasConflict 
+    ? 'text-rose-600' 
+    : hasNeedsReview 
+      ? 'text-amber-600' 
+      : 'text-emerald-700';
+
   return (
     <div className="space-y-3 pt-1">
       <div className="flex items-center justify-between">
         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Extracted Policy Parameters</h4>
-        <span className="text-[11px] text-emerald-700 font-mono font-semibold">100% Citation Grounded</span>
+        <span className={`text-[11px] ${groundingColor} font-mono font-semibold`}>{groundingLabel}</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
@@ -37,14 +55,18 @@ export default function PolicyRulesCards({ rules, onCitationClick }) {
           const IconComponent = rule.icon || getRuleIcon(rule.rule_type);
           const rawLabel = rule.label || rule.rule_key || rule.rule_type;
           const displayLabel = rawLabel.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-          let displayValue = rule.value;
-          if (rule.value !== undefined && rule.value !== null) {
-            if (rule.rule_type === 'copay' || rule.unit === 'percent') {
-              displayValue = `${rule.value}%`;
-            } else if (typeof rule.value === 'number') {
-              displayValue = `₹${rule.value.toLocaleString('en-IN')}`;
+          let displayValue = rule.formatted_value;
+          if (!displayValue) {
+            if (rule.value !== undefined && rule.value !== null) {
+              if (rule.rule_type === 'copay' || rule.unit === 'percent') {
+                displayValue = `${rule.value}%`;
+              } else if (typeof rule.value === 'number') {
+                displayValue = `₹${rule.value.toLocaleString('en-IN')}`;
+              } else {
+                displayValue = String(rule.value);
+              }
             } else {
-              displayValue = String(rule.value);
+              displayValue = 'N/A';
             }
           }
 
@@ -53,7 +75,10 @@ export default function PolicyRulesCards({ rules, onCitationClick }) {
             clause: rule.clause || 'N/A',
             rule: displayLabel,
             source_text: rule.source_text || `${displayLabel}: ${displayValue}`,
-            details: displayValue
+            details: displayValue,
+            bbox: rule.bbox,
+            status: rule.status || 'VERIFIED',
+            additional_sources: rule.additional_sources || []
           };
 
           return (
@@ -74,8 +99,15 @@ export default function PolicyRulesCards({ rules, onCitationClick }) {
               </p>
 
               <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 font-mono">
-                <span>Page {rule.page || 1}</span>
-                <span className="text-emerald-700 font-bold group-hover:underline">{rule.clause || 'N/A'}</span>
+                <div className="flex items-center space-x-1">
+                  <span>Page {rule.page || 1}</span>
+                  {rule.additional_sources && rule.additional_sources.length > 0 && (
+                    <span className="text-[9px] px-1 py-0.2 bg-slate-100 text-slate-500 rounded" title={`${rule.additional_sources.length} additional sources`}>
+                      +{rule.additional_sources.length}
+                    </span>
+                  )}
+                </div>
+                <span className="text-emerald-700 font-bold group-hover:underline truncate max-w-[100px]">{rule.clause || 'N/A'}</span>
               </div>
             </div>
           );

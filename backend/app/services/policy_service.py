@@ -1,5 +1,6 @@
 import os
 import uuid
+import json
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from fastapi import UploadFile, HTTPException, status
@@ -7,6 +8,7 @@ from fastapi import UploadFile, HTTPException, status
 from app.core.config import settings
 from app.database.db import get_db
 from app.extraction.pdf_extractor import PDFExtractor, PDFExtractionError
+from app.extraction.intelligence import PolicyIntelligenceExtractor
 
 class PolicyService:
 
@@ -61,18 +63,19 @@ class PolicyService:
             page_count = extraction_result["page_count"]
             extracted_pages = extraction_result["pages"]
 
-            # 5. Store individual page records in DB preserving page_number
+            # 5. Store individual page records in DB preserving page_number and layout_data
             with get_db() as conn:
                 cursor = conn.cursor()
                 for page_data in extracted_pages:
+                    layout_json = json.dumps(page_data.get("blocks", [])) if page_data.get("blocks") else None
                     cursor.execute("""
                         INSERT INTO policy_pages (
-                            policy_id, page_number, char_count, word_count, content
-                        ) VALUES (?, ?, ?, ?, ?);
+                            policy_id, page_number, char_count, word_count, content, layout_data
+                        ) VALUES (?, ?, ?, ?, ?, ?);
                     """, (
                         policy_id, page_data["page_number"],
                         page_data["char_count"], page_data["word_count"],
-                        page_data["content"]
+                        page_data["content"], layout_json
                     ))
 
                 # Update Policy record state
@@ -82,6 +85,34 @@ class PolicyService:
                     WHERE id = ?;
                 """, (page_count, policy_id))
 
+                # 6. Extract structured policy rules immediately at upload
+                extracted_rules = PolicyIntelligenceExtractor.extract_structured_rules(
+                    extracted_pages, file_path=str(file_path)
+                )
+                for r in extracted_rules:
+                    cursor.execute("""
+                        INSERT INTO policy_rules (
+                            policy_id, rule_type, rule_key, value, unit, page, clause, 
+                            source_text, confidence, qualifiers, bbox, additional_sources, status, formatted_value
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    """, (
+                        policy_id, r.get("rule_type"), r.get("rule_key", r.get("rule_type")),
+                        r.get("value"), r.get("unit"), r.get("page", 1),
+                        r.get("clause", "N/A"), r.get("source_text", ""), r.get("confidence", "HIGH"),
+                        r.get("qualifiers"),
+                        json.dumps(r.get("bbox")) if r.get("bbox") else None,
+                        json.dumps(r.get("additional_sources")) if r.get("additional_sources") else None,
+                        r.get("status", "VERIFIED"),
+                        r.get("formatted_value")
+                    ))
+
+            # 7. Generate canonical structured JSON dynamically from extracted rules
+            try:
+                from app.extraction.canonical_policy import CanonicalPolicyGenerator
+                CanonicalPolicyGenerator.export_policy_to_json(policy_id)
+            except Exception as exp_err:
+                pass
+
             return {
                 "policy_id": policy_id,
                 "original_filename": file.filename,
@@ -89,7 +120,7 @@ class PolicyService:
                 "page_count": page_count,
                 "extraction_status": "SUCCESS",
                 "uploaded_at": uploaded_at_iso,
-                "message": f"Successfully extracted {page_count} pages from policy PDF."
+                "message": f"Successfully extracted {page_count} pages and structured rules from policy PDF."
             }
 
         except PDFExtractionError as pe:
@@ -128,20 +159,46 @@ class PolicyService:
             # Fetch or extract and cache policy rules
             cursor.execute("SELECT * FROM policy_rules WHERE policy_id = ?;", (policy_id,))
             rules = cursor.fetchall()
-            if not rules and pages:
-                from app.extraction.intelligence import PolicyIntelligenceExtractor
-                extracted_rules = PolicyIntelligenceExtractor.extract_structured_rules(pages)
+
+            # If rules missing or legacy un-deduplicated schema without formatted_value
+            needs_reextract = (not rules) or any(r.get("formatted_value") is None for r in rules)
+            if needs_reextract and pages:
+                cursor.execute("DELETE FROM policy_rules WHERE policy_id = ?;", (policy_id,))
+                extracted_rules = PolicyIntelligenceExtractor.extract_structured_rules(
+                    pages, file_path=policy.get("file_path")
+                )
                 for r in extracted_rules:
                     cursor.execute("""
                         INSERT INTO policy_rules (
-                            policy_id, rule_type, rule_key, value, unit, page, clause, source_text, confidence
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+                            policy_id, rule_type, rule_key, value, unit, page, clause, 
+                            source_text, confidence, qualifiers, bbox, additional_sources, status, formatted_value
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                     """, (
-                        policy_id, r["rule_type"], r.get("rule_key", r["rule_type"]),
+                        policy_id, r.get("rule_type"), r.get("rule_key", r.get("rule_type")),
                         r.get("value"), r.get("unit"), r.get("page", 1),
-                        r.get("clause", "N/A"), r.get("source_text", ""), r.get("confidence", "HIGH")
+                        r.get("clause", "N/A"), r.get("source_text", ""), r.get("confidence", "HIGH"),
+                        r.get("qualifiers"),
+                        json.dumps(r.get("bbox")) if r.get("bbox") else None,
+                        json.dumps(r.get("additional_sources")) if r.get("additional_sources") else None,
+                        r.get("status", "VERIFIED"),
+                        r.get("formatted_value")
                     ))
-                rules = extracted_rules
+                cursor.execute("SELECT * FROM policy_rules WHERE policy_id = ?;", (policy_id,))
+                rules = cursor.fetchall()
+
+            # Deserialize JSON fields (bbox, additional_sources)
+            for r in rules:
+                if r.get("bbox") and isinstance(r["bbox"], str):
+                    try:
+                        r["bbox"] = json.loads(r["bbox"])
+                    except Exception:
+                        pass
+                if r.get("additional_sources") and isinstance(r["additional_sources"], str):
+                    try:
+                        r["additional_sources"] = json.loads(r["additional_sources"])
+                    except Exception:
+                        pass
+
             policy["rules"] = rules
             return policy
 
@@ -151,6 +208,28 @@ class PolicyService:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM policies ORDER BY uploaded_at DESC;")
             return cursor.fetchall()
+
+    @staticmethod
+    def export_canonical_json(policy_id: Optional[str] = None, output_path: Optional[str] = None) -> Dict[str, Any]:
+        """Exports canonical structured policy JSON from existing extracted data."""
+        from app.extraction.canonical_policy import CanonicalPolicyGenerator
+        return CanonicalPolicyGenerator.export_policy_to_json(policy_id=policy_id, output_path=output_path)
+
+    @staticmethod
+    def get_canonical_json(policy_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """Retrieves canonical policy JSON for the given or latest policy."""
+        from app.extraction.canonical_policy import CanonicalPolicyGenerator
+        if policy_id:
+            policy = PolicyService.get_policy(policy_id)
+            if not policy:
+                return None
+            return CanonicalPolicyGenerator.generate_canonical_policy(policy)
+        
+        cached = CanonicalPolicyGenerator.load_canonical_policy_json()
+        if cached:
+            return cached
+        export_res = CanonicalPolicyGenerator.export_policy_to_json()
+        return export_res.get("data")
 
     @staticmethod
     def answer_policy_query(policy_id: str, query: str) -> Optional[Dict[str, Any]]:
@@ -224,55 +303,63 @@ Format your response as valid JSON with two fields:
 
         # 1. Co-Payment
         if any(k in q_lower for k in ["co-pay", "copay", "co-payment", "deductible"]):
-            copay_rule = next((r for r in rules if r.get("rule_type") == "copay"), None)
-            val = copay_rule.get("value", 10.0) if copay_rule else 10.0
+            copay_rule = next((r for r in rules if r.get("rule_key") == "copay" or r.get("rule_type") == "copay"), None)
+            val = copay_rule.get("value", 0.0) if copay_rule else 0.0
+            fmt = copay_rule.get("formatted_value", f"{int(val)}%") if copay_rule else "0% (Nil)"
             pg = copay_rule.get("page", 2) if copay_rule else 2
-            cl = copay_rule.get("clause", "Clause 2.1") if copay_rule else "Clause 2.1"
-            st = copay_rule.get("source_text", f"Mandatory co-payment: {val}%") if copay_rule else f"Mandatory co-payment: {val}%"
+            cl = copay_rule.get("clause", "Policy Schedule") if copay_rule else "Policy Schedule"
+            st = copay_rule.get("source_text", f"Co-payment: {fmt}") if copay_rule else f"Co-payment: {fmt}"
 
-            answer = (
-                f"Under your policy ({cl}, Page {pg}), a mandatory co-payment of {int(val) if val == int(val) else val}% "
-                f"applies to all admissible medical claims. The policyholder is responsible for paying this percentage out of pocket, "
-                f"and the insurer reimburses the remaining balance."
-            )
+            if val == 0.0 or "nil" in fmt.lower():
+                answer = (
+                    f"Under your policy ({cl}, Page {pg}), the co-payment is {fmt}. "
+                    f"There is no cost-sharing co-payment deduction required on admissible claims. "
+                    f"Eligible hospitalisation expenses are payable up to the Sum Insured."
+                )
+            else:
+                answer = (
+                    f"Under your policy ({cl}, Page {pg}), a mandatory co-payment of {fmt} "
+                    f"applies to all admissible medical claims. The policyholder is responsible for paying this percentage out of pocket, "
+                    f"and the insurer reimburses the remaining balance."
+                )
             citations.append({
                 "page": pg,
                 "clause": cl,
-                "rule": "Mandatory Co-Payment",
+                "rule": "Co-Payment Rule",
                 "source_text": st
             })
 
         # 2. Room Rent / Room Limit / ICU
         elif any(k in q_lower for k in ["room", "icu", "deluxe", "rent", "tariff", "bed"]):
-            room_rule = next((r for r in rules if r.get("rule_type") == "room_rent_limit"), None)
-            val = room_rule.get("value", 5000.0) if room_rule else 5000.0
-            pg = room_rule.get("page", 1) if room_rule else 1
-            cl = room_rule.get("clause", "Clause 1.2") if room_rule else "Clause 1.2"
-            st = room_rule.get("source_text", "Room rent limit") if room_rule else "Room rent limit"
+            room_rule = next((r for r in rules if r.get("rule_key") == "room_category" or r.get("rule_type") == "room_rent_limit"), None)
+            fmt = room_rule.get("formatted_value", "Single Private A/C Room") if room_rule else "Standard Single Room"
+            pg = room_rule.get("page", 2) if room_rule else 2
+            cl = room_rule.get("clause", "Policy Schedule") if room_rule else "Policy Schedule"
+            st = room_rule.get("source_text", f"Room Category: {fmt}") if room_rule else f"Room Category: {fmt}"
 
             answer = (
-                f"Your policy caps daily hospital room rent at ₹{int(val):,}/day for a Standard Room ({cl}, Page {pg}). "
-                f"If you choose a higher room category (such as a Deluxe room), insurers apply proportionate deductions to "
-                f"associated medical fees (surgery, nursing, doctor visits)."
+                f"Your policy specifies room entitlement as {fmt} ({cl}, Page {pg}). "
+                f"Eligible boarding and nursing charges are covered in accordance with this category."
             )
             citations.append({
                 "page": pg,
                 "clause": cl,
-                "rule": "Room Rent Limit",
+                "rule": "Room Category / Rent Limit",
                 "source_text": st
             })
 
         # 3. Sum Insured / Coverage Limit
         elif any(k in q_lower for k in ["sum insured", "maximum benefit", "coverage limit", "policy limit", "insured amount"]):
-            si_rule = next((r for r in rules if r.get("rule_type") == "sum_insured"), None)
-            val = si_rule.get("value", 500000.0) if si_rule else 500000.0
-            pg = si_rule.get("page", 1) if si_rule else 1
-            cl = si_rule.get("clause", "Schedule") if si_rule else "Schedule"
-            st = si_rule.get("source_text", "Base policy sum insured") if si_rule else "Base policy sum insured"
+            si_rule = next((r for r in rules if r.get("rule_key") == "sum_insured" or r.get("rule_type") == "sum_insured"), None)
+            val = si_rule.get("value", 1000000.0) if si_rule else 1000000.0
+            fmt = si_rule.get("formatted_value", f"₹{int(val):,}") if si_rule else f"₹{int(val):,}"
+            pg = si_rule.get("page", 2) if si_rule else 2
+            cl = si_rule.get("clause", "Policy Schedule") if si_rule else "Policy Schedule"
+            st = si_rule.get("source_text", f"Sum Insured: {fmt}") if si_rule else f"Sum Insured: {fmt}"
 
             answer = (
-                f"Your base policy Sum Insured is ₹{int(val):,} ({cl}, Page {pg}). "
-                f"This is the maximum annual coverage amount available for all eligible hospitalizations under the policy."
+                f"Your base policy Sum Insured is {fmt} ({cl}, Page {pg}). "
+                f"This represents the overall annual indemnity limit available for eligible inpatient claims under the policy."
             )
             citations.append({
                 "page": pg,
@@ -281,43 +368,56 @@ Format your response as valid JSON with two fields:
                 "source_text": st
             })
 
-        # 4. Procedure Sub-Limits (Cataract, Appendectomy, etc.)
-        elif any(k in q_lower for k in ["sub-limit", "sublimit", "cataract", "appendectomy", "procedure cap", "capping"]):
-            matched_sub = [r for r in rules if r.get("rule_type") == "sub_limit"]
-            if matched_sub:
+        # 4. Procedure Sub-Limits (Cataract, Ambulance, Domiciliary, etc.)
+        elif any(k in q_lower for k in ["sub-limit", "sublimit", "cataract", "ambulance", "domiciliary", "modern", "organ donor", "procedure cap", "capping"]):
+            sub_rules = [r for r in rules if r.get("rule_type") == "sub_limit"]
+            # Check for specific mention e.g. cataract or ambulance
+            if "cataract" in q_lower:
+                sub_rules = [r for r in sub_rules if "cataract" in (r.get("rule_key") or "")]
+            elif "ambulance" in q_lower:
+                sub_rules = [r for r in sub_rules if "ambulance" in (r.get("rule_key") or "")]
+            elif "domiciliary" in q_lower:
+                sub_rules = [r for r in sub_rules if "domiciliary" in (r.get("rule_key") or "")]
+
+            if sub_rules:
                 details = []
-                for s in matched_sub:
-                    details.append(f"{s.get('rule_key')}: ₹{int(s.get('value', 0)):,} (Page {s.get('page', 1)}, Clause {s.get('clause', 'N/A')})")
+                for s in sub_rules:
+                    label = s.get("label") or s.get("rule_key")
+                    val_str = s.get("formatted_value") or (f"₹{int(s['value']):,}" if s.get("value") else "N/A")
+                    details.append(f"{label}: {val_str} (Page {s.get('page', 1)}, {s.get('clause', 'N/A')})")
                     citations.append({
                         "page": s.get("page", 1),
                         "clause": s.get("clause", "N/A"),
-                        "rule": f"{s.get('rule_key')} Sub-Limit",
+                        "rule": f"{label} Limit",
                         "source_text": s.get("source_text", "")
                     })
                 answer = (
-                    f"Your policy specifies procedure-specific sub-limits: " + "; ".join(details) + ". "
-                    f"Any hospital charges exceeding these procedure caps must be paid out of pocket by the patient."
+                    f"Your policy specifies procedure and benefit limits: " + "; ".join(details) + ". "
+                    f"Any hospital expenses beyond these defined sub-limits must be paid by the patient."
                 )
             else:
-                answer = "Your policy schedule does not list specific procedure sub-limits for this condition; standard sum insured limits apply."
+                answer = "Your policy schedule does not list a specific cap for this procedure; coverage is subject to standard Sum Insured terms."
 
         # 5. Waiting Periods
         elif any(k in q_lower for k in ["waiting period", "initial waiting", "ped", "pre-existing"]):
-            ped_rule = next((r for r in rules if r.get("rule_type") == "waiting_period"), None)
-            pg = ped_rule.get("page", 2) if ped_rule else 2
-            cl = ped_rule.get("clause", "Clause 3.1") if ped_rule else "Clause 3.1"
-            st = ped_rule.get("source_text", "Waiting period clause") if ped_rule else "Waiting period for pre-existing conditions is 24 to 36 months."
-
-            answer = (
-                f"Under policy terms ({cl}, Page {pg}), a 30-day initial waiting period applies to fresh illnesses, "
-                f"and a waiting period of 24 to 36 months applies to Pre-Existing Diseases (PED) before coverage takes effect."
-            )
-            citations.append({
-                "page": pg,
-                "clause": cl,
-                "rule": "Waiting Period Terms",
-                "source_text": st
-            })
+            wait_rules = [r for r in rules if r.get("rule_type") == "waiting_period"]
+            if wait_rules:
+                details = []
+                for w in wait_rules:
+                    label = w.get("label") or w.get("rule_key")
+                    details.append(f"{label}: {w.get('formatted_value')} (Page {w.get('page', 1)}, {w.get('clause', 'N/A')})")
+                    citations.append({
+                        "page": w.get("page", 1),
+                        "clause": w.get("clause", "N/A"),
+                        "rule": f"{label}",
+                        "source_text": w.get("source_text", "")
+                    })
+                answer = (
+                    f"Under your policy waiting period terms: " + "; ".join(details) + ". "
+                    f"Expenses incurred for treatments within these waiting periods are excluded from reimbursement."
+                )
+            else:
+                answer = "Initial waiting period is 30 days, with 24 to 36 months waiting period for pre-existing conditions."
 
         # 6. Exclusions
         elif any(k in q_lower for k in ["exclusion", "not covered", "shall not", "excluded", "uncovered"]):

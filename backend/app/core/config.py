@@ -18,11 +18,14 @@ class Settings:
     BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
     UPLOADS_DIR: Path = BASE_DIR / "uploads"
     DATA_DIR: Path = BASE_DIR.parent / "data"
+    BACKEND_DATA_DIR: Path = BASE_DIR / "data"
+    CANONICAL_JSON_PATH: Path = BASE_DIR / "data" / "policy.json"
 
 settings = Settings()
 
 # Ensure directories exist
 settings.UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+settings.BACKEND_DATA_DIR.mkdir(parents=True, exist_ok=True)
 (settings.DATA_DIR / "processed").mkdir(parents=True, exist_ok=True)
 (settings.DATA_DIR / "sample_policies").mkdir(parents=True, exist_ok=True)
 (settings.DATA_DIR / "treatment_costs").mkdir(parents=True, exist_ok=True)

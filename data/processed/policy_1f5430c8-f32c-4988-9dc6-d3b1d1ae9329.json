@@ -1,0 +1,389 @@
+{
+  "policy": {
+    "policy_id": "1f5430c8-f32c-4988-9dc6-d3b1d1ae9329",
+    "product_name": "Health Insurance Policy Retail. I",
+    "policy_type": "Comprehensive Health Insurance (Indemnity)",
+    "policy_period": {
+      "start": null,
+      "end": null
+    },
+    "sum_insured": {
+      "value": null,
+      "currency": "INR",
+      "formatted_value": "N/A",
+      "sources": []
+    }
+  },
+  "coverage_rules": [
+    {
+      "rule_id": "484",
+      "rule_key": "room_category",
+      "name": "Room Category",
+      "category": "room_rent_limit",
+      "value": null,
+      "unit": "category",
+      "formatted_value": "Standard Single Room",
+      "qualifiers": [
+        "standard_limit"
+      ],
+      "page": 3,
+      "clause": "In-patient Hospitalisation Clause",
+      "source_text": "applicable room rent and other charges as given in the scope of cover under the policy.",
+      "bbox": {
+        "x": 105.24,
+        "y": 344.6,
+        "width": 163.27,
+        "height": 9.7,
+        "page": 3
+      },
+      "additional_sources": [],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "486",
+      "rule_key": "ambulance_sublimit",
+      "name": "Ambulance Sublimit",
+      "category": "sub_limit",
+      "value": 1500.0,
+      "unit": "INR",
+      "formatted_value": "Up to ₹1,500 per hospitalisation",
+      "qualifiers": [
+        "per hospitalisation"
+      ],
+      "page": 7,
+      "clause": "Road Ambulance Clause",
+      "source_text": "8. Ambulance Expenses: 1% of Sum Insured per Policy period up to a maximum of INR 1500 will be reimbursed",
+      "bbox": {
+        "x": 105.24,
+        "y": 297.06,
+        "width": 45.57,
+        "height": 9.7,
+        "page": 7
+      },
+      "additional_sources": [],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "488",
+      "rule_key": "copay",
+      "name": "Copay",
+      "category": "copay",
+      "value": 10.0,
+      "unit": "percent",
+      "formatted_value": "10%",
+      "qualifiers": [
+        "non-network hospitals, admissible claims"
+      ],
+      "page": 8,
+      "clause": "Co-payment Clause",
+      "source_text": "17. Co-pay: For all admissible claims in non-network hospitals, Insured shall bear 10% of the admissible claim",
+      "bbox": {
+        "x": 87.72,
+        "y": 392.0,
+        "width": 12.29,
+        "height": 9.7,
+        "page": 8
+      },
+      "additional_sources": [],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "489",
+      "rule_key": "post_hospitalisation",
+      "name": "Post Hospitalisation",
+      "category": "sub_limit",
+      "value": 15.0,
+      "unit": "days",
+      "formatted_value": "Up to 15 days",
+      "qualifiers": [
+        "within Sum Insured"
+      ],
+      "page": 13,
+      "clause": "Post-Hospitalisation Clause",
+      "source_text": "4. In respect of post hospitalization claims, the claims must be lodged within 15days from the",
+      "bbox": {
+        "x": 122.76,
+        "y": 581.96,
+        "width": 7.37,
+        "height": 9.7,
+        "page": 13
+      },
+      "additional_sources": [],
+      "status": "CONFLICT",
+      "confidence": "HIGH"
+    }
+  ],
+  "waiting_periods": [],
+  "exclusions": [],
+  "benefits": [
+    {
+      "rule_id": "485",
+      "rule_key": "cataract_sublimit",
+      "name": "Cataract Sublimit",
+      "category": "sub_limit",
+      "value": 25000.0,
+      "unit": "INR",
+      "formatted_value": "₹25,000 per eye",
+      "qualifiers": [
+        "per eye"
+      ],
+      "page": 6,
+      "clause": "Cataract Clause",
+      "source_text": "INR 25000 per eye and further subject to first two years exclusion for cataract as provided under the Policy.",
+      "bbox": {
+        "x": 105.24,
+        "y": 677.22,
+        "width": 33.85,
+        "height": 9.7,
+        "page": 6
+      },
+      "additional_sources": [],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    }
+  ],
+  "restore_benefits": [],
+  "bonuses": [
+    {
+      "rule_id": "487",
+      "rule_key": "cumulative_bonus",
+      "name": "Cumulative Bonus",
+      "category": "cumulative_bonus",
+      "value": 25.0,
+      "unit": "percent",
+      "formatted_value": "25% per claim-free year",
+      "qualifiers": [
+        "per claim-free year"
+      ],
+      "page": 14,
+      "clause": "Cumulative Bonus Clause",
+      "source_text": "cumulative bonus shall not exceed 25% of the Sum Insured in any policy year. The cumulative bonus to be",
+      "bbox": {
+        "x": 92.16,
+        "y": 492.78,
+        "width": 73.13,
+        "height": 9.7,
+        "page": 14
+      },
+      "additional_sources": [
+        {
+          "page": 15,
+          "clause": "Cumulative Bonus Clause",
+          "source_text": "than 25%, a deduction of 5% will be made from the % of no claim bonus enjoyed and the balance",
+          "bbox": {
+            "x": 140.28,
+            "y": 142.52,
+            "width": 244.25,
+            "height": 9.7,
+            "page": 15
+          }
+        },
+        {
+          "page": 8,
+          "clause": "Cumulative Bonus Clause",
+          "source_text": "cumulative bonus accrued.  Any such increase in sum insured over and above the base sum insured due to",
+          "bbox": {
+            "x": 105.24,
+            "y": 285.08,
+            "width": 244.22,
+            "height": 9.7,
+            "page": 8
+          }
+        }
+      ],
+      "status": "CONFLICT",
+      "confidence": "HIGH"
+    }
+  ],
+  "rules": [
+    {
+      "rule_id": "484",
+      "rule_key": "room_category",
+      "name": "Room Category",
+      "category": "room_rent_limit",
+      "value": null,
+      "unit": "category",
+      "formatted_value": "Standard Single Room",
+      "qualifiers": [
+        "standard_limit"
+      ],
+      "page": 3,
+      "clause": "In-patient Hospitalisation Clause",
+      "source_text": "applicable room rent and other charges as given in the scope of cover under the policy.",
+      "bbox": {
+        "x": 105.24,
+        "y": 344.6,
+        "width": 163.27,
+        "height": 9.7,
+        "page": 3
+      },
+      "additional_sources": [],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "485",
+      "rule_key": "cataract_sublimit",
+      "name": "Cataract Sublimit",
+      "category": "sub_limit",
+      "value": 25000.0,
+      "unit": "INR",
+      "formatted_value": "₹25,000 per eye",
+      "qualifiers": [
+        "per eye"
+      ],
+      "page": 6,
+      "clause": "Cataract Clause",
+      "source_text": "INR 25000 per eye and further subject to first two years exclusion for cataract as provided under the Policy.",
+      "bbox": {
+        "x": 105.24,
+        "y": 677.22,
+        "width": 33.85,
+        "height": 9.7,
+        "page": 6
+      },
+      "additional_sources": [],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "486",
+      "rule_key": "ambulance_sublimit",
+      "name": "Ambulance Sublimit",
+      "category": "sub_limit",
+      "value": 1500.0,
+      "unit": "INR",
+      "formatted_value": "Up to ₹1,500 per hospitalisation",
+      "qualifiers": [
+        "per hospitalisation"
+      ],
+      "page": 7,
+      "clause": "Road Ambulance Clause",
+      "source_text": "8. Ambulance Expenses: 1% of Sum Insured per Policy period up to a maximum of INR 1500 will be reimbursed",
+      "bbox": {
+        "x": 105.24,
+        "y": 297.06,
+        "width": 45.57,
+        "height": 9.7,
+        "page": 7
+      },
+      "additional_sources": [],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "487",
+      "rule_key": "cumulative_bonus",
+      "name": "Cumulative Bonus",
+      "category": "cumulative_bonus",
+      "value": 25.0,
+      "unit": "percent",
+      "formatted_value": "25% per claim-free year",
+      "qualifiers": [
+        "per claim-free year"
+      ],
+      "page": 14,
+      "clause": "Cumulative Bonus Clause",
+      "source_text": "cumulative bonus shall not exceed 25% of the Sum Insured in any policy year. The cumulative bonus to be",
+      "bbox": {
+        "x": 92.16,
+        "y": 492.78,
+        "width": 73.13,
+        "height": 9.7,
+        "page": 14
+      },
+      "additional_sources": [
+        {
+          "page": 15,
+          "clause": "Cumulative Bonus Clause",
+          "source_text": "than 25%, a deduction of 5% will be made from the % of no claim bonus enjoyed and the balance",
+          "bbox": {
+            "x": 140.28,
+            "y": 142.52,
+            "width": 244.25,
+            "height": 9.7,
+            "page": 15
+          }
+        },
+        {
+          "page": 8,
+          "clause": "Cumulative Bonus Clause",
+          "source_text": "cumulative bonus accrued.  Any such increase in sum insured over and above the base sum insured due to",
+          "bbox": {
+            "x": 105.24,
+            "y": 285.08,
+            "width": 244.22,
+            "height": 9.7,
+            "page": 8
+          }
+        }
+      ],
+      "status": "CONFLICT",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "488",
+      "rule_key": "copay",
+      "name": "Copay",
+      "category": "copay",
+      "value": 10.0,
+      "unit": "percent",
+      "formatted_value": "10%",
+      "qualifiers": [
+        "non-network hospitals, admissible claims"
+      ],
+      "page": 8,
+      "clause": "Co-payment Clause",
+      "source_text": "17. Co-pay: For all admissible claims in non-network hospitals, Insured shall bear 10% of the admissible claim",
+      "bbox": {
+        "x": 87.72,
+        "y": 392.0,
+        "width": 12.29,
+        "height": 9.7,
+        "page": 8
+      },
+      "additional_sources": [],
+      "status": "VERIFIED",
+      "confidence": "HIGH"
+    },
+    {
+      "rule_id": "489",
+      "rule_key": "post_hospitalisation",
+      "name": "Post Hospitalisation",
+      "category": "sub_limit",
+      "value": 15.0,
+      "unit": "days",
+      "formatted_value": "Up to 15 days",
+      "qualifiers": [
+        "within Sum Insured"
+      ],
+      "page": 13,
+      "clause": "Post-Hospitalisation Clause",
+      "source_text": "4. In respect of post hospitalization claims, the claims must be lodged within 15days from the",
+      "bbox": {
+        "x": 122.76,
+        "y": 581.96,
+        "width": 7.37,
+        "height": 9.7,
+        "page": 13
+      },
+      "additional_sources": [],
+      "status": "CONFLICT",
+      "confidence": "HIGH"
+    }
+  ],
+  "metadata": {
+    "source_type": "uploaded_policy_pdf",
+    "original_filename": "a370272f732749999e7c19e82e38ad7c.pdf",
+    "file_path": "C:\\Users\\kgbag\\OneDrive\\Desktop\\HACKMATRIX\\Spasth\\backend\\uploads\\1f5430c8-f32c-4988-9dc6-d3b1d1ae9329_a370272f732749999e7c19e82e38ad7c.pdf",
+    "file_size_bytes": 438003,
+    "page_count": 27,
+    "generated_at": "2026-10-10T10:32:18.239129Z",
+    "schema_version": "1.0",
+    "rules_count": 6,
+    "verification_status": "CONFLICT"
+  }
+}
