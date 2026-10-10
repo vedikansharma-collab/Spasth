@@ -48,7 +48,15 @@ class PolicyIntelligenceExtractor:
         """Calls Gemini API with page context to extract structured policy parameters."""
         import google.generativeai as genai
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = None
+        for m_name in ["gemini-3.8-flash", "gemini-2.5-flash-lite", "gemini-1.5-flash"]:
+            try:
+                model = genai.GenerativeModel(m_name)
+                break
+            except Exception:
+                pass
+        if not model:
+            model = genai.GenerativeModel("gemini-3.8-flash")
 
         context = "\n\n".join([
             f"--- PAGE {p['page_number']} ---\n{p['content']}" for p in policy_pages

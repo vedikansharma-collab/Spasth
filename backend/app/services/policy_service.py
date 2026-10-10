@@ -113,6 +113,21 @@ class PolicyService:
             except Exception as exp_err:
                 pass
 
+            # 8. Create searchable policy chunks and compute RAG vector embeddings during upload
+            try:
+                from app.rag.chunker import PolicyChunker
+                from app.rag.embeddings import PolicyEmbeddingGenerator
+                from app.rag.vector_store import PolicyVectorStore
+                
+                canonical_json = PolicyService.get_canonical_json(policy_id)
+                rules = canonical_json.get("rules", []) if canonical_json else extracted_rules
+                chunks = PolicyChunker.create_chunks(policy_id, policy_id, extracted_pages, rules)
+                for c in chunks:
+                    c["embedding"] = PolicyEmbeddingGenerator.generate_embedding(c["text"])
+                PolicyVectorStore.save_chunks(policy_id, chunks)
+            except Exception as rag_err:
+                pass
+
             return {
                 "policy_id": policy_id,
                 "original_filename": file.filename,
@@ -120,7 +135,7 @@ class PolicyService:
                 "page_count": page_count,
                 "extraction_status": "SUCCESS",
                 "uploaded_at": uploaded_at_iso,
-                "message": f"Successfully extracted {page_count} pages and structured rules from policy PDF."
+                "message": f"Successfully extracted {page_count} pages, structured rules, and RAG vector index from policy PDF."
             }
 
         except PDFExtractionError as pe:

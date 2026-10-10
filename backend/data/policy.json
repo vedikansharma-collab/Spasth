@@ -1,6 +1,6 @@
 {
   "policy": {
-    "policy_id": "2dee2d75-f9a2-4d5e-8910-f776385fae91",
+    "policy_id": "2ec4c40f-2b45-4fe7-8c85-d65b1faeb9d4",
     "product_name": "sample health policy",
     "policy_type": "Comprehensive Health Insurance (Indemnity)",
     "policy_period": {
@@ -30,7 +30,7 @@
   },
   "coverage_rules": [
     {
-      "rule_id": "630",
+      "rule_id": "734",
       "rule_key": "room_category",
       "name": "Room Category",
       "category": "room_rent_limit",
@@ -74,7 +74,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "631",
+      "rule_id": "735",
       "rule_key": "copay",
       "name": "Copay",
       "category": "copay",
@@ -118,7 +118,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "634",
+      "rule_id": "738",
       "rule_key": "pre_hospitalisation",
       "name": "Pre Hospitalisation",
       "category": "sub_limit",
@@ -163,7 +163,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "635",
+      "rule_id": "739",
       "rule_key": "post_hospitalisation",
       "name": "Post Hospitalisation",
       "category": "sub_limit",
@@ -210,7 +210,7 @@
   ],
   "waiting_periods": [
     {
-      "rule_id": "636",
+      "rule_id": "740",
       "rule_key": "initial_waiting_period",
       "name": "Initial Waiting Period",
       "category": "waiting_period",
@@ -257,7 +257,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "637",
+      "rule_id": "741",
       "rule_key": "ped_waiting_period",
       "name": "Ped Waiting Period",
       "category": "waiting_period",
@@ -305,7 +305,7 @@
   "exclusions": [],
   "benefits": [
     {
-      "rule_id": "628",
+      "rule_id": "732",
       "rule_key": "sum_insured",
       "name": "Sum Insured",
       "category": "sum_insured",
@@ -350,7 +350,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "632",
+      "rule_id": "736",
       "rule_key": "cataract_sublimit",
       "name": "Cataract Sublimit",
       "category": "sub_limit",
@@ -395,7 +395,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "633",
+      "rule_id": "737",
       "rule_key": "appendectomy_cap",
       "name": "Appendectomy Cap",
       "category": "sub_limit",
@@ -443,7 +443,7 @@
   "restore_benefits": [],
   "bonuses": [
     {
-      "rule_id": "629",
+      "rule_id": "733",
       "rule_key": "cumulative_bonus",
       "name": "Cumulative Bonus",
       "category": "cumulative_bonus",
@@ -502,7 +502,7 @@
   ],
   "rules": [
     {
-      "rule_id": "628",
+      "rule_id": "732",
       "rule_key": "sum_insured",
       "name": "Sum Insured",
       "category": "sum_insured",
@@ -547,7 +547,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "629",
+      "rule_id": "733",
       "rule_key": "cumulative_bonus",
       "name": "Cumulative Bonus",
       "category": "cumulative_bonus",
@@ -604,7 +604,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "630",
+      "rule_id": "734",
       "rule_key": "room_category",
       "name": "Room Category",
       "category": "room_rent_limit",
@@ -648,7 +648,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "631",
+      "rule_id": "735",
       "rule_key": "copay",
       "name": "Copay",
       "category": "copay",
@@ -692,7 +692,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "632",
+      "rule_id": "736",
       "rule_key": "cataract_sublimit",
       "name": "Cataract Sublimit",
       "category": "sub_limit",
@@ -737,7 +737,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "633",
+      "rule_id": "737",
       "rule_key": "appendectomy_cap",
       "name": "Appendectomy Cap",
       "category": "sub_limit",
@@ -782,7 +782,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "634",
+      "rule_id": "738",
       "rule_key": "pre_hospitalisation",
       "name": "Pre Hospitalisation",
       "category": "sub_limit",
@@ -827,7 +827,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "635",
+      "rule_id": "739",
       "rule_key": "post_hospitalisation",
       "name": "Post Hospitalisation",
       "category": "sub_limit",
@@ -872,7 +872,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "636",
+      "rule_id": "740",
       "rule_key": "initial_waiting_period",
       "name": "Initial Waiting Period",
       "category": "waiting_period",
@@ -919,7 +919,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "637",
+      "rule_id": "741",
       "rule_key": "ped_waiting_period",
       "name": "Ped Waiting Period",
       "category": "waiting_period",
@@ -967,10 +967,10 @@
   "metadata": {
     "source_type": "uploaded_policy_pdf",
     "original_filename": "sample_health_policy.pdf",
-    "file_path": "C:\\Users\\kgbag\\OneDrive\\Desktop\\HACKMATRIX\\Spasth\\backend\\uploads\\2dee2d75-f9a2-4d5e-8910-f776385fae91_sample_health_policy.pdf",
+    "file_path": "C:\\Users\\kgbag\\OneDrive\\Desktop\\HACKMATRIX\\Spasth\\backend\\uploads\\2ec4c40f-2b45-4fe7-8c85-d65b1faeb9d4_sample_health_policy.pdf",
     "file_size_bytes": 2943,
     "page_count": 3,
-    "generated_at": "2026-10-10T11:39:18.611175Z",
+    "generated_at": "2026-10-10T18:24:45.184231Z",
     "schema_version": "1.0",
     "rules_count": 10,
     "verification_status": "VERIFIED"

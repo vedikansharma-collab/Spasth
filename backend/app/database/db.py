@@ -76,7 +76,27 @@ def init_db():
             );
         """)
 
-        # 4. Treatment costs benchmark dataset table
+        # 4. Policy chunks table for RAG Vector Index
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS policy_chunks (
+                chunk_id TEXT PRIMARY KEY,
+                policy_id TEXT NOT NULL,
+                document_id TEXT NOT NULL,
+                section TEXT,
+                clause TEXT,
+                rule_type TEXT,
+                subtype TEXT,
+                text TEXT NOT NULL,
+                source_page INTEGER NOT NULL,
+                source_text TEXT NOT NULL,
+                bbox TEXT,
+                embedding TEXT,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (policy_id) REFERENCES policies(id) ON DELETE CASCADE
+            );
+        """)
+
+        # 5. Treatment costs benchmark dataset table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS treatment_costs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -125,6 +145,7 @@ def init_db():
         # Create indices
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_policy_pages_policy_id ON policy_pages(policy_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_policy_rules_policy_id ON policy_rules(policy_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_policy_chunks_policy_id ON policy_chunks(policy_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_treatment_costs_proc_city ON treatment_costs(procedure_name, city);")
 
         # Seed treatment costs dataset if empty or refresh synthetic benchmarks
