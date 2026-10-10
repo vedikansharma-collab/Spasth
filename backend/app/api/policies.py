@@ -96,7 +96,12 @@ def ask_policy(policy_id: str, request: PolicyAskRequest):
     POST /api/policies/{policy_id}/ask
     Answers policy questions grounded in extracted policy document text and preserved page citations.
     """
-    result = PolicyService.answer_policy_query(policy_id, request.query)
+    result = PolicyService.answer_policy_query(
+        policy_id, 
+        request.query, 
+        request.conversation_id, 
+        request.history
+    )
     if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

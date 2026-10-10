@@ -1,9 +1,10 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import re
+from app.rag.policy_assistant import PolicyAssistantEngine
 
 class PolicyRetriever:
     """
-    RAG & Clause Retriever for searching preserved policy page chunks.
+    RAG & Clause Retriever for searching preserved policy page chunks and canonical Policy JSON.
     Maintains page numbers, clauses, and source text for citations.
     """
 
@@ -32,9 +33,22 @@ class PolicyRetriever:
         relevant_pages = []
 
         for page in pages:
-            text_lower = page["content"].lower()
+            text_lower = page.get("content", "").lower()
             if any(kw in text_lower for kw in target_keywords):
                 relevant_pages.append(page)
 
         # Fallback to all pages if keyword search produced empty set
         return relevant_pages if relevant_pages else pages
+
+    @staticmethod
+    def retrieve_rules_and_answer(
+        policy_id: str,
+        query: str,
+        canonical_json: Dict[str, Any],
+        history: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
+        """
+        Delegates query processing to PolicyAssistantEngine using canonical Policy JSON.
+        """
+        return PolicyAssistantEngine.process_query(policy_id, query, canonical_json, history)
+

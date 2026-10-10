@@ -52,14 +52,24 @@ class PolicySummaryResponse(BaseModel):
 class PolicyCitationSchema(BaseModel):
     page: int
     clause: Optional[str] = "N/A"
+    section: Optional[str] = None
     rule: Optional[str] = "Policy Term"
     source_text: str
+    bbox: Optional[List[float]] = None
+    rule_id: Optional[str] = None
 
 class PolicyAskRequest(BaseModel):
     query: str
+    conversation_id: Optional[str] = None
+    history: Optional[List[Dict[str, Any]]] = None
 
 class PolicyAskResponse(BaseModel):
     policy_id: str
     query: str
     answer: str
     citations: List[PolicyCitationSchema] = []
+    confidence: float = 0.95
+    grounding_status: str = "GROUNDED"
+    rules_used: List[str] = []
+    missing_information: List[str] = []
+

@@ -1,6 +1,6 @@
 {
   "policy": {
-    "policy_id": "29c408d0-ada6-4328-b4fc-df0bd61c6d19",
+    "policy_id": "c84ed37d-a63e-4f58-abd9-d8a9118eead8",
     "product_name": "Swasthya Suraksha Health Insurance Policy",
     "policy_type": "Family Floater (Indemnity)",
     "policy_period": {
@@ -54,7 +54,7 @@
   },
   "coverage_rules": [
     {
-      "rule_id": "594",
+      "rule_id": "558",
       "rule_key": "copay",
       "name": "Copay",
       "category": "copay",
@@ -116,7 +116,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "595",
+      "rule_id": "559",
       "rule_key": "room_category",
       "name": "Room Category",
       "category": "room_rent_limit",
@@ -178,7 +178,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "597",
+      "rule_id": "561",
       "rule_key": "pre_hospitalisation",
       "name": "Pre Hospitalisation",
       "category": "sub_limit",
@@ -203,7 +203,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "598",
+      "rule_id": "562",
       "rule_key": "post_hospitalisation",
       "name": "Post Hospitalisation",
       "category": "sub_limit",
@@ -228,7 +228,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "600",
+      "rule_id": "564",
       "rule_key": "ambulance_sublimit",
       "name": "Ambulance Sublimit",
       "category": "sub_limit",
@@ -268,7 +268,7 @@
   ],
   "waiting_periods": [
     {
-      "rule_id": "596",
+      "rule_id": "560",
       "rule_key": "ped_waiting_period",
       "name": "Ped Waiting Period",
       "category": "waiting_period",
@@ -318,7 +318,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "605",
+      "rule_id": "569",
       "rule_key": "initial_waiting_period",
       "name": "Initial Waiting Period",
       "category": "waiting_period",
@@ -343,7 +343,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "606",
+      "rule_id": "570",
       "rule_key": "specific_disease_waiting_period",
       "name": "Specific Disease Waiting Period",
       "category": "waiting_period",
@@ -375,7 +375,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "607",
+      "rule_id": "571",
       "rule_key": "joint_replacement_waiting_period",
       "name": "Joint Replacement Waiting Period",
       "category": "waiting_period",
@@ -403,7 +403,7 @@
   "exclusions": [],
   "benefits": [
     {
-      "rule_id": "592",
+      "rule_id": "556",
       "rule_key": "sum_insured",
       "name": "Sum Insured",
       "category": "sum_insured",
@@ -453,7 +453,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "599",
+      "rule_id": "563",
       "rule_key": "domiciliary_sublimit",
       "name": "Domiciliary Sublimit",
       "category": "sub_limit",
@@ -491,7 +491,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "601",
+      "rule_id": "565",
       "rule_key": "modern_treatment_sublimit",
       "name": "Modern Treatment Sublimit",
       "category": "sub_limit",
@@ -529,7 +529,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "602",
+      "rule_id": "566",
       "rule_key": "organ_donor_sublimit",
       "name": "Organ Donor Sublimit",
       "category": "sub_limit",
@@ -567,7 +567,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "603",
+      "rule_id": "567",
       "rule_key": "cataract_sublimit",
       "name": "Cataract Sublimit",
       "category": "sub_limit",
@@ -607,7 +607,7 @@
   ],
   "restore_benefits": [
     {
-      "rule_id": "604",
+      "rule_id": "568",
       "rule_key": "restore_benefit",
       "name": "Restore Benefit",
       "category": "restore_benefit",
@@ -647,7 +647,7 @@
   ],
   "bonuses": [
     {
-      "rule_id": "593",
+      "rule_id": "557",
       "rule_key": "cumulative_bonus",
       "name": "Cumulative Bonus",
       "category": "cumulative_bonus",
@@ -723,7 +723,7 @@
   ],
   "rules": [
     {
-      "rule_id": "592",
+      "rule_id": "556",
       "rule_key": "sum_insured",
       "name": "Sum Insured",
       "category": "sum_insured",
@@ -773,7 +773,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "593",
+      "rule_id": "557",
       "rule_key": "cumulative_bonus",
       "name": "Cumulative Bonus",
       "category": "cumulative_bonus",
@@ -847,7 +847,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "594",
+      "rule_id": "558",
       "rule_key": "copay",
       "name": "Copay",
       "category": "copay",
@@ -909,7 +909,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "595",
+      "rule_id": "559",
       "rule_key": "room_category",
       "name": "Room Category",
       "category": "room_rent_limit",
@@ -971,7 +971,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "596",
+      "rule_id": "560",
       "rule_key": "ped_waiting_period",
       "name": "Ped Waiting Period",
       "category": "waiting_period",
@@ -1021,7 +1021,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "597",
+      "rule_id": "561",
       "rule_key": "pre_hospitalisation",
       "name": "Pre Hospitalisation",
       "category": "sub_limit",
@@ -1046,7 +1046,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "598",
+      "rule_id": "562",
       "rule_key": "post_hospitalisation",
       "name": "Post Hospitalisation",
       "category": "sub_limit",
@@ -1071,7 +1071,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "599",
+      "rule_id": "563",
       "rule_key": "domiciliary_sublimit",
       "name": "Domiciliary Sublimit",
       "category": "sub_limit",
@@ -1109,7 +1109,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "600",
+      "rule_id": "564",
       "rule_key": "ambulance_sublimit",
       "name": "Ambulance Sublimit",
       "category": "sub_limit",
@@ -1147,7 +1147,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "601",
+      "rule_id": "565",
       "rule_key": "modern_treatment_sublimit",
       "name": "Modern Treatment Sublimit",
       "category": "sub_limit",
@@ -1185,7 +1185,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "602",
+      "rule_id": "566",
       "rule_key": "organ_donor_sublimit",
       "name": "Organ Donor Sublimit",
       "category": "sub_limit",
@@ -1223,7 +1223,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "603",
+      "rule_id": "567",
       "rule_key": "cataract_sublimit",
       "name": "Cataract Sublimit",
       "category": "sub_limit",
@@ -1261,7 +1261,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "604",
+      "rule_id": "568",
       "rule_key": "restore_benefit",
       "name": "Restore Benefit",
       "category": "restore_benefit",
@@ -1299,7 +1299,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "605",
+      "rule_id": "569",
       "rule_key": "initial_waiting_period",
       "name": "Initial Waiting Period",
       "category": "waiting_period",
@@ -1324,7 +1324,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "606",
+      "rule_id": "570",
       "rule_key": "specific_disease_waiting_period",
       "name": "Specific Disease Waiting Period",
       "category": "waiting_period",
@@ -1356,7 +1356,7 @@
       "confidence": "HIGH"
     },
     {
-      "rule_id": "607",
+      "rule_id": "571",
       "rule_key": "joint_replacement_waiting_period",
       "name": "Joint Replacement Waiting Period",
       "category": "waiting_period",
@@ -1384,10 +1384,10 @@
   "metadata": {
     "source_type": "uploaded_policy_pdf",
     "original_filename": "Sample_Health_Insurance_Policy.pdf",
-    "file_path": "C:\\Users\\kgbag\\OneDrive\\Desktop\\HACKMATRIX\\Spasth\\backend\\uploads\\29c408d0-ada6-4328-b4fc-df0bd61c6d19_Sample_Health_Insurance_Policy.pdf",
+    "file_path": "C:\\Users\\kgbag\\OneDrive\\Desktop\\HACKMATRIX\\Spasth\\backend\\uploads\\c84ed37d-a63e-4f58-abd9-d8a9118eead8_Sample_Health_Insurance_Policy.pdf",
     "file_size_bytes": 57582,
     "page_count": 17,
-    "generated_at": "2026-10-10T11:15:52.673647Z",
+    "generated_at": "2026-10-10T11:05:06.705748Z",
     "schema_version": "1.0",
     "rules_count": 16,
     "verification_status": "VERIFIED"
