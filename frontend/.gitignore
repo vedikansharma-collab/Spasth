@@ -25,3 +25,18 @@ dist-ssr
 .env
 *.env
 backend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Local databases
+*.db
+
+# Uploaded/generated files
+backend/uploads/
+data/processed/
+
+# RAG generated indexes
+backend/app/rag/faiss_index/
