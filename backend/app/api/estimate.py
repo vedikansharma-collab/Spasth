@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, File, UploadFile
 from typing import List, Dict, Any, Optional
+import logging
 from sqlalchemy.orm import Session
 
 from app.database.db import get_db
@@ -12,6 +13,8 @@ from app.calculation.engine import FinancialCalculationEngine
 from app.schemas.estimate import EstimateRequest, EstimateResponse
 
 from app.services.treatment_service import TreatmentService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Financial Estimation"])
 
@@ -614,3 +617,41 @@ def calculate_claim_precision_endpoint(
     res["trace"] = res.get("calculation_trace", [])
 
     return res
+
+
+@router.post("/estimate/upload-bill")
+@router.post("/estimate/extract-bill")
+@router.post("/bills/extract")
+async def extract_bill_endpoint(
+    file: UploadFile = File(...),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """
+    POST /api/estimate/upload-bill & POST /api/estimate/extract-bill
+    Extracts bill total amount, non-covered items, hospital and procedure details from an uploaded PDF hospital bill.
+    """
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only PDF bill documents are supported for bill extraction."
+        )
+
+    try:
+        content = await file.read()
+        if len(content) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The uploaded PDF file is empty."
+            )
+        from app.extraction.bill_extractor import HospitalBillExtractor
+        result = HospitalBillExtractor.extract_from_bytes(content, filename=file.filename)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error extracting bill PDF: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process hospital bill PDF: {str(e)}"
+        )
+

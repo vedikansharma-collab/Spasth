@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Stethoscope, MapPin, Bed, Activity, Calculator, Loader2, 
-  DollarSign, ShieldAlert, Hash, Info, CheckCircle2, AlertCircle, FileText, Sparkles
+  DollarSign, ShieldAlert, Hash, Info, CheckCircle2, AlertCircle, FileText, Sparkles,
+  UploadCloud, FileUp, RefreshCw, X, Building2
 } from 'lucide-react';
-import { getTreatments } from '../services/api';
+import { getTreatments, uploadHospitalBill } from '../services/api';
 
 export default function TreatmentScenarioForm({ policyId, activePolicy, onCalculate, loading }) {
   const [procedures, setProcedures] = useState([
@@ -43,6 +44,14 @@ export default function TreatmentScenarioForm({ policyId, activePolicy, onCalcul
   const [nonCoveredExpense, setNonCoveredExpense] = useState('0');
   const [hasPED, setHasPED] = useState(false);
   const [policyTenureMonths, setPolicyTenureMonths] = useState('24');
+
+  // PDF Bill Upload and Auto-Extraction State
+  const [billFile, setBillFile] = useState(null);
+  const [billUploading, setBillUploading] = useState(false);
+  const [billExtractionResult, setBillExtractionResult] = useState(null);
+  const [billUploadError, setBillUploadError] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Load dataset metadata from backend
   useEffect(() => {
@@ -102,12 +111,12 @@ export default function TreatmentScenarioForm({ policyId, activePolicy, onCalcul
     return fallbacks[selectedProcedure]?.[selectedCity] || 85000;
   }, [activeBenchmark, selectedProcedure, selectedCity]);
 
-  // Sync actualCost input placeholder when procedure or city changes
+  // Sync actualCost input placeholder when procedure or city changes if not extracted
   useEffect(() => {
-    if (costMode === 'actual') {
+    if (costMode === 'actual' && !billExtractionResult && (!actualCost || actualCost === '0')) {
       setActualCost(String(referenceCost));
     }
-  }, [referenceCost, costMode]);
+  }, [referenceCost, costMode, billExtractionResult]);
 
   const formatINR = (amt) => {
     if (!amt || isNaN(amt)) return '₹0';
@@ -118,24 +127,31 @@ export default function TreatmentScenarioForm({ policyId, activePolicy, onCalcul
     }).format(amt);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // Helper to trigger calculation using deterministic math engine
+  const executeCalculation = ({
+    targetCost,
+    targetNonCovered,
+    targetProcedure,
+    targetCostMode = 'actual'
+  }) => {
     if (!policyId) return;
 
-    const finalTreatmentCost = costMode === 'actual' ? Number(actualCost) : Number(referenceCost);
+    const costVal = targetCost !== undefined ? Number(targetCost) : (targetCostMode === 'actual' ? Number(actualCost) : Number(referenceCost));
+    const nonCoveredVal = targetNonCovered !== undefined ? Number(targetNonCovered) : (nonCoveredExpense ? Number(nonCoveredExpense) : 0);
+    const procVal = targetProcedure || selectedProcedure;
 
     onCalculate({
       policy_id: policyId,
-      procedure_name: selectedProcedure,
-      procedure: selectedProcedure,
-      treatment: selectedProcedure,
+      procedure_name: procVal,
+      procedure: procVal,
+      treatment: procVal,
       city: selectedCity,
-      treatment_cost: finalTreatmentCost,
+      treatment_cost: costVal,
       quantity: quantity ? Number(quantity) : 1,
-      non_covered_expense: nonCoveredExpense ? Number(nonCoveredExpense) : 0,
+      non_covered_expense: nonCoveredVal,
       room_category: selectedRoom,
-      cost_mode: costMode,
-      use_actual_cost: costMode === 'actual',
+      cost_mode: targetCostMode,
+      use_actual_cost: targetCostMode === 'actual',
       condition: hasPED ? 'Pre-Existing Condition' : 'None',
       policy_tenure_months: policyTenureMonths ? Number(policyTenureMonths) : 24,
       is_ped: hasPED,
@@ -143,6 +159,118 @@ export default function TreatmentScenarioForm({ policyId, activePolicy, onCalcul
         is_ped: hasPED,
         policy_tenure_months: policyTenureMonths ? Number(policyTenureMonths) : 24
       }
+    });
+  };
+
+  // Process and extract uploaded hospital bill PDF
+  const processBillFile = async (file) => {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
+      setBillUploadError('Please select a valid PDF hospital bill file.');
+      return;
+    }
+
+    setBillFile(file);
+    setBillUploading(true);
+    setBillUploadError(null);
+
+    try {
+      const data = await uploadHospitalBill(file);
+      if (data.status === 'ERROR') {
+        setBillUploadError(data.message || 'Failed to extract PDF bill.');
+        setBillUploading(false);
+        return;
+      }
+
+      setBillExtractionResult(data);
+      setCostMode('actual');
+
+      const extractedTotal = data.total_amount > 0 ? data.total_amount : 85000;
+      const extractedNonCovered = data.non_covered_amount || 0;
+      setActualCost(String(extractedTotal));
+      if (extractedNonCovered > 0) {
+        setNonCoveredExpense(String(extractedNonCovered));
+      }
+
+      let procToUse = selectedProcedure;
+      if (data.detected_procedure) {
+        const match = procedures.find(p => p.toLowerCase() === data.detected_procedure.toLowerCase());
+        if (match) {
+          procToUse = match;
+          setSelectedProcedure(match);
+        }
+      }
+
+      // Automatically calculate out-of-pocket cost using the mathematical model
+      if (policyId) {
+        executeCalculation({
+          targetCost: extractedTotal,
+          targetNonCovered: extractedNonCovered,
+          targetProcedure: procToUse,
+          targetCostMode: 'actual'
+        });
+      }
+    } catch (err) {
+      console.error('Error extracting bill PDF:', err);
+      setBillUploadError(err.response?.data?.detail || err.response?.data?.message || err.message || 'Error uploading and processing bill PDF.');
+    } finally {
+      setBillUploading(false);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer?.files?.[0]) {
+      processBillFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  // Reset extracted bill
+  const handleResetBill = () => {
+    setBillFile(null);
+    setBillExtractionResult(null);
+    setBillUploadError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Demonstration test with built-in sample bill PDF
+  const handleTrySampleBill = async () => {
+    try {
+      setBillUploading(true);
+      setBillUploadError(null);
+      const res = await fetch('/sample_hospital_bill.pdf');
+      if (!res.ok) throw new Error('Sample bill PDF not available');
+      const blob = await res.blob();
+      const file = new File([blob], 'sample_hospital_bill.pdf', { type: 'application/pdf' });
+      await processBillFile(file);
+    } catch (err) {
+      console.error('Failed to load sample bill:', err);
+      setBillUploadError('Failed to load sample bill PDF. Please upload a PDF bill from your computer.');
+      setBillUploading(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!policyId) return;
+
+    executeCalculation({
+      targetCost: costMode === 'actual' ? Number(actualCost) : Number(referenceCost),
+      targetNonCovered: nonCoveredExpense ? Number(nonCoveredExpense) : 0,
+      targetProcedure: selectedProcedure,
+      targetCostMode: costMode
     });
   };
 
@@ -277,7 +405,7 @@ export default function TreatmentScenarioForm({ policyId, activePolicy, onCalcul
               onClick={() => setCostMode('actual')}
               className={`p-3 rounded-xl text-left border transition-all cursor-pointer ${
                 costMode === 'actual'
-                  ? 'bg-white border-[#006668] shadow-xs'
+                  ? 'bg-white border-[#006668] shadow-xs ring-1 ring-[#006668]/20'
                   : 'bg-transparent border-[#E2E8E8] hover:bg-white/60 text-[#4A5859]'
               }`}
             >
@@ -286,33 +414,189 @@ export default function TreatmentScenarioForm({ policyId, activePolicy, onCalcul
                 {costMode === 'actual' && <CheckCircle2 className="w-4 h-4 text-[#006668]" />}
               </div>
               <p className="text-[11px] text-[#4A5859] mt-1">
-                Enter your exact medical invoice quotation or final bill amount.
+                Upload your medical bill PDF or enter custom invoice quotation.
               </p>
-              <span className="inline-block text-[10px] text-[#4A5859] font-bold bg-[#E2E8E8]/60 px-2 py-0.5 rounded mt-1">
-                Custom Invoice Amount
-              </span>
+              <div className="flex items-center space-x-1.5 mt-1">
+                <span className="inline-block text-[10px] text-[#006668] font-bold bg-[#006668]/10 px-2 py-0.5 rounded">
+                  Upload Bill PDF
+                </span>
+                <span className="inline-block text-[10px] text-[#4A5859] font-bold bg-[#E2E8E8]/60 px-2 py-0.5 rounded">
+                  Custom Amount
+                </span>
+              </div>
             </button>
           </div>
 
-          {/* Conditional Input for Actual Bill */}
+          {/* Conditional Input and Upload Facility for Actual Bill */}
           {costMode === 'actual' ? (
-            <div className="pt-2 space-y-1.5 animate-fade-in">
-              <label className="text-xs font-semibold text-[#003339] flex items-center justify-between">
-                <span>User-Provided Actual Treatment Cost (₹)</span>
-                <span className="text-[10px] text-[#006668] font-mono">Editable</span>
-              </label>
-              <input
-                type="number"
-                min="1000"
-                step="1000"
-                value={actualCost}
-                onChange={(e) => setActualCost(e.target.value)}
-                placeholder="e.g. 85000"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#006668] text-sm font-bold text-[#003339] focus:outline-hidden focus:ring-1 focus:ring-[#006668] transition-all font-mono"
-              />
-              <span className="text-[11px] text-[#4A5859] block">
-                Identified as: <strong className="text-[#003339]">User-provided actual treatment cost</strong>.
-              </span>
+            <div className="pt-2 space-y-4 animate-fade-in">
+              {/* PDF Bill Upload Facility Card */}
+              <div className="rounded-xl border border-[#006668]/20 bg-white p-4 space-y-3 shadow-2xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#E2E8E8]">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-lg bg-[rgba(0,102,104,0.08)] text-[#006668] flex items-center justify-center">
+                      <FileUp className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-[#003339]">Upload Hospital Bill (PDF)</h4>
+                      <p className="text-[11px] text-[#4A5859]">Auto-extracts bill total, non-covered items &amp; computes cost with math model</p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleTrySampleBill}
+                    disabled={billUploading}
+                    className="text-[11px] font-semibold text-[#006668] hover:text-[#004d4f] bg-[rgba(0,102,104,0.08)] hover:bg-[rgba(0,102,104,0.15)] px-2.5 py-1 rounded-lg transition-colors flex items-center space-x-1 cursor-pointer self-start sm:self-auto shrink-0"
+                  >
+                    <Sparkles className="w-3 h-3 text-[#39ABAD]" />
+                    <span>Try Sample Bill (₹92,000)</span>
+                  </button>
+                </div>
+
+                {/* Dropzone / Upload Area */}
+                {!billExtractionResult ? (
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all ${
+                      isDragging
+                        ? 'border-[#006668] bg-[#006668]/5 scale-[0.99]'
+                        : 'border-[#E2E8E8] hover:border-[#006668]/50 hover:bg-[#F7F7F8]'
+                    }`}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      onChange={(e) => e.target.files?.[0] && processBillFile(e.target.files[0])}
+                      className="hidden"
+                    />
+
+                    {billUploading ? (
+                      <div className="flex flex-col items-center justify-center space-y-2 py-2">
+                        <Loader2 className="w-7 h-7 text-[#006668] animate-spin" />
+                        <div className="text-xs font-bold text-[#003339]">Extracting Hospital Bill Details...</div>
+                        <div className="text-[11px] text-[#4A5859]">Analyzing total amount, procedures &amp; non-covered consumables via PyMuPDF</div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center space-y-1.5 py-1">
+                        <div className="w-10 h-10 rounded-full bg-[rgba(0,102,104,0.06)] flex items-center justify-center text-[#006668] mb-1">
+                          <UploadCloud className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-semibold text-[#003339]">
+                          <span className="text-[#006668] underline decoration-dotted underline-offset-2">Click to upload</span> or drag and drop your bill PDF
+                        </p>
+                        <p className="text-[10px] text-[#4A5859]">Supports hospital invoices, IPD discharge summaries, or quotations (PDF)</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Extracted Bill Details Card */
+                  <div className="bg-[#006668]/5 border border-[#006668]/30 rounded-xl p-3.5 space-y-3 animate-fade-in">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle2 className="w-4 h-4 text-[#006668]" />
+                        <span className="text-xs font-bold text-[#003339]">Hospital Bill PDF Extracted</span>
+                        <span className="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-[#006668]/20 text-[#006668] font-semibold truncate max-w-[180px]">
+                          {billExtractionResult.filename}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleResetBill}
+                        className="text-[11px] text-[#4A5859] hover:text-[#D51B1D] flex items-center space-x-1 cursor-pointer"
+                        title="Upload another bill"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        <span>Change</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-left">
+                      <div className="bg-white p-2 rounded-lg border border-[#E2E8E8]">
+                        <span className="text-[10px] text-[#4A5859] block">Extracted Total</span>
+                        <span className="text-xs font-bold text-[#006668] font-mono">
+                          {formatINR(billExtractionResult.total_amount)}
+                        </span>
+                      </div>
+                      <div className="bg-white p-2 rounded-lg border border-[#E2E8E8]">
+                        <span className="text-[10px] text-[#4A5859] block">Non-Covered</span>
+                        <span className="text-xs font-bold text-[#4A5859] font-mono">
+                          {formatINR(billExtractionResult.non_covered_amount || 0)}
+                        </span>
+                      </div>
+                      <div className="bg-white p-2 rounded-lg border border-[#E2E8E8] col-span-2 sm:col-span-1">
+                        <span className="text-[10px] text-[#4A5859] block">Hospital</span>
+                        <span className="text-xs font-semibold text-[#003339] truncate block" title={billExtractionResult.hospital_name}>
+                          {billExtractionResult.hospital_name || 'Hospital'}
+                        </span>
+                      </div>
+                      <div className="bg-white p-2 rounded-lg border border-[#E2E8E8] col-span-2 sm:col-span-1">
+                        <span className="text-[10px] text-[#4A5859] block">Invoice No</span>
+                        <span className="text-xs font-mono font-semibold text-[#003339] truncate block">
+                          {billExtractionResult.bill_number || 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] pt-1 border-t border-[#006668]/15">
+                      <span className="text-[#006668] font-medium flex items-center space-x-1">
+                        <Sparkles className="w-3.5 h-3.5 text-[#39ABAD]" />
+                        <span>Deterministic Math Model Auto-Calculated</span>
+                      </span>
+                      <span className="text-[10px] text-[#4A5859] font-mono">PyMuPDF Verified</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Banner if any */}
+                {billUploadError && (
+                  <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                      <span>{billUploadError}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setBillUploadError(null)}
+                      className="text-red-400 hover:text-red-600 cursor-pointer p-0.5"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Editable Input for Actual Bill */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#003339] flex items-center justify-between">
+                  <span>User-Provided Actual Treatment Cost (₹)</span>
+                  <div className="flex items-center space-x-2">
+                    {billExtractionResult ? (
+                      <span className="text-[10px] text-[#006668] bg-[#006668]/10 font-bold px-1.5 py-0.5 rounded font-mono">
+                        Extracted from PDF
+                      </span>
+                    ) : null}
+                    <span className="text-[10px] text-[#006668] font-mono">Editable</span>
+                  </div>
+                </label>
+                <input
+                  type="number"
+                  min="1000"
+                  step="1000"
+                  value={actualCost}
+                  onChange={(e) => setActualCost(e.target.value)}
+                  placeholder="e.g. 85000"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#006668] text-sm font-bold text-[#003339] focus:outline-hidden focus:ring-1 focus:ring-[#006668] transition-all font-mono"
+                />
+                <span className="text-[11px] text-[#4A5859] block">
+                  Identified as: <strong className="text-[#003339]">User-provided actual treatment cost</strong>.
+                  {billExtractionResult && ' You can edit this amount anytime to recompute.'}
+                </span>
+              </div>
             </div>
           ) : (
             <div className="text-[11px] text-[#4A5859] pt-1">

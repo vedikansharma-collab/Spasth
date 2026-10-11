@@ -201,8 +201,34 @@ def init_db():
             );
         """)
 
+        # 6. Users table for authentication
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'user',
+                is_active BOOLEAN NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+        """)
+
+        # Ensure owner_id and is_public exist in policies table
+        try:
+            cursor.execute("PRAGMA table_info(policies);")
+            cols = [r[1] for r in cursor.fetchall()]
+            if "owner_id" not in cols:
+                cursor.execute("ALTER TABLE policies ADD COLUMN owner_id TEXT;")
+            if "is_public" not in cols:
+                cursor.execute("ALTER TABLE policies ADD COLUMN is_public BOOLEAN NOT NULL DEFAULT 1;")
+        except Exception:
+            pass
+
         # Create indices
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_policy_pages_policy_id ON policy_pages(policy_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_policy_rules_policy_id ON policy_rules(policy_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_policy_chunks_policy_id ON policy_chunks(policy_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_treatment_costs_proc_city ON treatment_costs(procedure_name, city);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);")
