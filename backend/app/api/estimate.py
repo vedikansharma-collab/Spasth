@@ -1,7 +1,11 @@
-from fastapi import APIRouter, HTTPException, status
-from typing import List, Dict, Any
+from fastapi import APIRouter, HTTPException, status, Depends
+from typing import List, Dict, Any, Optional
+from sqlalchemy.orm import Session
 
 from app.database.db import get_db
+from app.database.session import SessionLocal, get_db as get_db_session
+from app.models.user import User
+from app.core.auth import get_current_user_optional, verify_policy_access
 from app.services.policy_service import PolicyService
 from app.extraction.intelligence import PolicyIntelligenceExtractor
 from app.calculation.engine import FinancialCalculationEngine
@@ -11,10 +15,22 @@ from app.services.treatment_service import TreatmentService
 
 router = APIRouter(tags=["Financial Estimation"])
 
-def process_calculation_request(request: EstimateRequest) -> EstimateResponse:
+def process_calculation_request(
+    request: EstimateRequest,
+    current_user: Optional[User] = None,
+    db: Optional[Session] = None
+) -> EstimateResponse:
     effective_procedure = request.get_effective_procedure()
 
-    # 1. Fetch Policy & Preserved Pages
+    # 1. Verify policy access authorization if policy_id is provided
+    if request.policy_id:
+        if db is not None:
+            verify_policy_access(request.policy_id, current_user, db)
+        else:
+            with SessionLocal() as session:
+                verify_policy_access(request.policy_id, current_user, session)
+
+    # 2. Fetch Policy & Preserved Pages
     policy = PolicyService.get_policy(request.policy_id)
     if not policy:
         raise HTTPException(
@@ -124,28 +140,43 @@ def process_calculation_request(request: EstimateRequest) -> EstimateResponse:
     )
 
 @router.post("/estimate", response_model=EstimateResponse)
-def calculate_estimate_endpoint(request: EstimateRequest):
+def calculate_estimate_endpoint(
+    request: EstimateRequest,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db_session)
+):
     """
     POST /api/estimate
     Calculates deterministic insurance coverage and out-of-pocket expenses.
+    Enforces policy authorization when policy_id is supplied.
     """
-    return process_calculation_request(request)
+    return process_calculation_request(request, current_user=current_user, db=db)
 
 @router.post("/calculate", response_model=EstimateResponse)
-def calculate_endpoint(request: EstimateRequest):
+def calculate_endpoint(
+    request: EstimateRequest,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db_session)
+):
     """
     POST /api/calculate
     Alias endpoint for Treatment Cost Calculation.
+    Enforces policy authorization when policy_id is supplied.
     """
-    return process_calculation_request(request)
+    return process_calculation_request(request, current_user=current_user, db=db)
 
 @router.post("/estimate/calculate-claim")
 @router.post("/calculate-claim")
-def calculate_claim_precision_endpoint(request: Dict[str, Any]):
+def calculate_claim_precision_endpoint(
+    request: Dict[str, Any],
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db_session)
+):
     """
     POST /api/estimate/calculate-claim & POST /api/calculate-claim
     Direct interface to the Precision Math Engine.
     Resolves authoritative backend policy rules if policy_id is provided, preventing frontend overrides.
+    Enforces policy authorization when policy_id is supplied.
     """
     from app.services.math_engine import MathEngine
     from app.services.policy_service import PolicyService
@@ -154,6 +185,9 @@ def calculate_claim_precision_endpoint(request: Dict[str, Any]):
     from app.calculation.coverage_checker import CoverageChecker
 
     policy_id = request.get("policy_id")
+    if policy_id:
+        verify_policy_access(policy_id, current_user, db)
+
     procedure_name = request.get("procedure_name") or request.get("procedure") or request.get("treatment")
     city = request.get("city") or "Pune"
     room_category = request.get("room_category") or "Standard"

@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.database.db import init_db
-from app.api import health, policies, treatments, estimate
+from app.api import health, policies, treatments, estimate, auth
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,6 +36,7 @@ app.add_middleware(
 )
 
 # Include API routers
+app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(health.router, prefix=settings.API_V1_STR)
 app.include_router(policies.router, prefix=settings.API_V1_STR)
 app.include_router(treatments.router, prefix=settings.API_V1_STR)

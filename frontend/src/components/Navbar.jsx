@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { 
   Shield, FileText, ArrowRight, Bot, Calculator, 
-  BookOpen, LayoutDashboard, UploadCloud, CheckCircle2 
+  BookOpen, LayoutDashboard, UploadCloud, CheckCircle2, User, LogOut, LogIn
 } from 'lucide-react';
 
 export default function Navbar({ 
   activeTab = 'dashboard', 
   onTabChange, 
   activePolicy = null,
-  onUploadClick 
+  onUploadClick,
+  currentUser = null,
+  onAuthClick,
+  onLogout
 }) {
   const [scrolled, setScrolled] = useState(false);
 
@@ -107,6 +110,31 @@ export default function Navbar({
               <UploadCloud className="w-4 h-4" />
               <span>Upload Policy</span>
             </button>
+
+            {/* User Auth Pill / Button */}
+            {currentUser ? (
+              <div className="flex items-center space-x-2 pl-2 border-l border-[#E2E8E8]">
+                <div className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-[#F7F7F8] border border-[#E2E8E8] text-xs">
+                  <User className="w-3.5 h-3.5 text-[#006668]" />
+                  <span className="font-semibold text-[#003339] max-w-[100px] truncate">{currentUser.email}</span>
+                </div>
+                <button
+                  onClick={onLogout}
+                  title="Sign Out"
+                  className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 cursor-pointer transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onAuthClick}
+                className="px-3 py-2 text-xs font-bold text-[#006668] bg-[rgba(57,171,173,0.1)] hover:bg-[rgba(57,171,173,0.2)] rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 shrink-0"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </button>
+            )}
           </div>
         </div>
 

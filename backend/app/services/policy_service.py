@@ -13,9 +13,13 @@ from app.extraction.intelligence import PolicyIntelligenceExtractor
 class PolicyService:
 
     @staticmethod
-    def upload_and_process_policy(file: UploadFile) -> Dict[str, Any]:
+    def upload_and_process_policy(
+        file: UploadFile,
+        owner_id: Optional[str] = None,
+        is_public: bool = False
+    ) -> Dict[str, Any]:
         """
-        Validates, saves, extracts page-by-page text, and stores policy in SQLite.
+        Validates, saves, extracts page-by-page text, and stores policy with owner_id and is_public.
         """
         # 1. Validate file extension
         if not file.filename.lower().endswith(".pdf"):
@@ -44,17 +48,19 @@ class PolicyService:
 
             uploaded_at_iso = datetime.utcnow().isoformat()
 
-            # 3. Create initial Policy record in DB
+            # 3. Create initial Policy record in DB with ownership
             with get_db() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     INSERT INTO policies (
                         id, filename, original_filename, file_path, 
-                        file_size_bytes, page_count, uploaded_at, extraction_status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+                        file_size_bytes, page_count, uploaded_at, extraction_status,
+                        owner_id, is_public
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """, (
                     policy_id, safe_filename, file.filename, str(file_path),
-                    file_size, 0, uploaded_at_iso, "PROCESSING"
+                    file_size, 0, uploaded_at_iso, "PROCESSING",
+                    owner_id, is_public
                 ))
 
             # 4. Perform Page-wise PDF Extraction using PyMuPDF
@@ -135,6 +141,8 @@ class PolicyService:
                 "page_count": page_count,
                 "extraction_status": "SUCCESS",
                 "uploaded_at": uploaded_at_iso,
+                "owner_id": owner_id,
+                "is_public": is_public,
                 "message": f"Successfully extracted {page_count} pages, structured rules, and RAG vector index from policy PDF."
             }
 
@@ -218,10 +226,18 @@ class PolicyService:
             return policy
 
     @staticmethod
-    def get_all_policies() -> List[Dict[str, Any]]:
+    def get_all_policies(user: Optional[Any] = None) -> List[Dict[str, Any]]:
         with get_db() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM policies ORDER BY uploaded_at DESC;")
+            if user and getattr(user, "role", None) == "admin":
+                cursor.execute("SELECT * FROM policies ORDER BY uploaded_at DESC;")
+            elif user and getattr(user, "id", None):
+                cursor.execute(
+                    "SELECT * FROM policies WHERE owner_id = ? OR is_public = TRUE ORDER BY uploaded_at DESC;",
+                    (user.id,)
+                )
+            else:
+                cursor.execute("SELECT * FROM policies WHERE is_public = TRUE ORDER BY uploaded_at DESC;")
             return cursor.fetchall()
 
     @staticmethod

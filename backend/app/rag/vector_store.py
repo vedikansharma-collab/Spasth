@@ -1,116 +1,138 @@
 import json
 import logging
-import numpy as np
 from datetime import datetime
-from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 
-from app.core.config import settings
-from app.database.db import get_db
+from sqlalchemy import select, delete, func, text
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from app.database.session import SessionLocal
+from app.models.policy import Policy, PolicyChunk
 
 logger = logging.getLogger(__name__)
 
+def chunked(iterable, n=100):
+    for i in range(0, len(iterable), n):
+        yield iterable[i:i + n]
+
 class PolicyVectorStore:
     """
-    RAG Vector Store — Manages chunk storage, embedding indexing, and policy-isolated vector retrieval.
+    RAG Vector Store — PostgreSQL + pgvector Authoritative Store.
     
-    Security Guarantee:
-    - EVERY vector query is strictly scoped by policy_id.
-    - Zero cross-policy / cross-user search leakage.
+    Guarantees:
+    - Authoritative chunk and 768-dim embedding storage in PostgreSQL `policy_chunks`.
+    - Native pgvector vector similarity search using cosine distance (<=>).
+    - Cosine similarity calculation: similarity = 1 - cosine_distance.
+    - EVERY vector query is strictly filtered by policy_id (strict policy isolation).
+    - Zero in-memory Python loops or filesystem index dependencies for search.
     """
 
     @classmethod
     def save_chunks(cls, policy_id: str, chunks: List[Dict[str, Any]]) -> int:
         """
-        Stores policy chunks and embeddings in SQLite and persists vector store file.
-        Executed once during policy upload/processing.
+        Stores policy chunks and embeddings in PostgreSQL (pgvector).
+        Executed during policy upload or chunking.
         """
         if not chunks:
             return 0
 
         created_at = datetime.utcnow().isoformat()
-
-        with get_db() as conn:
-            cursor = conn.cursor()
-            cursor.execute("PRAGMA foreign_keys = OFF;")
-
-            # Ensure policy_id exists in policies table to satisfy foreign key constraints
-            cursor.execute("SELECT id FROM policies WHERE id = ?;", (policy_id,))
-            if not cursor.fetchone():
-                cursor.execute("""
-                    INSERT OR REPLACE INTO policies (
-                        id, filename, original_filename, file_path, file_size_bytes, page_count, uploaded_at, extraction_status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-                """, (policy_id, f"{policy_id}.pdf", f"{policy_id}.pdf", "", 0, 1, created_at, "SUCCESS"))
+        db = SessionLocal()
+        try:
+            # Ensure policy exists to satisfy foreign key constraint
+            existing_pol = db.scalar(select(Policy.id).where(Policy.id == policy_id))
+            if not existing_pol:
+                dummy_pol = Policy(
+                    id=policy_id,
+                    filename=f"{policy_id}.pdf",
+                    original_filename=f"{policy_id}.pdf",
+                    file_path="",
+                    file_size_bytes=0,
+                    page_count=1,
+                    uploaded_at=created_at,
+                    extraction_status="SUCCESS"
+                )
+                db.add(dummy_pol)
+                db.commit()
 
             # Clear existing chunks for reprocessed policy
-            cursor.execute("DELETE FROM policy_chunks WHERE policy_id = ?;", (policy_id,))
+            db.execute(delete(PolicyChunk).where(PolicyChunk.policy_id == policy_id))
+            db.commit()
 
+            records = []
             for c in chunks:
-                emb_json = json.dumps(c.get("embedding", [])) if c.get("embedding") else None
-                bbox_json = json.dumps(c.get("bbox")) if c.get("bbox") else None
+                emb = c.get("embedding")
+                if emb is not None and not isinstance(emb, list):
+                    emb = list(emb)
+                bbox_val = c.get("bbox")
+                if bbox_val and not isinstance(bbox_val, str):
+                    bbox_val = json.dumps(bbox_val)
 
-                cursor.execute("""
-                    INSERT INTO policy_chunks (
-                        chunk_id, policy_id, document_id, section, clause, 
-                        rule_type, subtype, text, source_page, source_text, bbox, embedding, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                """, (
-                    c["chunk_id"], c["policy_id"], c["document_id"],
-                    c.get("section"), c.get("clause"), c.get("rule_type"),
-                    c.get("subtype"), c["text"], c["source_page"],
-                    c["source_text"], bbox_json, emb_json, created_at
-                ))
-            
-            cursor.execute("PRAGMA foreign_keys = ON;")
-
-        # Also write per-policy vector index file in VECTOR_DB_PATH directory
-        try:
-            vec_dir = Path(settings.BASE_DIR) / "app" / "rag" / "faiss_index"
-            vec_dir.mkdir(parents=True, exist_ok=True)
-            vec_file = vec_dir / f"vector_index_{policy_id}.json"
-            
-            with open(vec_file, "w", encoding="utf-8") as f:
-                json.dump({
+                records.append({
+                    "chunk_id": c["chunk_id"],
                     "policy_id": policy_id,
-                    "created_at": created_at,
-                    "chunks": chunks
-                }, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            logger.warning(f"Failed to save vector index JSON file: {e}")
+                    "document_id": c.get("document_id") or policy_id,
+                    "section": c.get("section"),
+                    "clause": c.get("clause"),
+                    "rule_type": c.get("rule_type"),
+                    "subtype": c.get("subtype"),
+                    "text": c.get("text") or c.get("source_text") or "",
+                    "source_page": int(c.get("source_page", 1)),
+                    "source_text": c.get("source_text") or c.get("text") or "",
+                    "bbox": bbox_val,
+                    "embedding": emb,
+                    "created_at": c.get("created_at") or created_at
+                })
 
-        logger.info(f"Indexed {len(chunks)} chunks into vector store for policy {policy_id}")
-        return len(chunks)
+            for batch in chunked(records, 100):
+                stmt = pg_insert(PolicyChunk).values(batch)
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=[PolicyChunk.chunk_id],
+                    set_={
+                        "policy_id": stmt.excluded.policy_id,
+                        "document_id": stmt.excluded.document_id,
+                        "section": stmt.excluded.section,
+                        "clause": stmt.excluded.clause,
+                        "rule_type": stmt.excluded.rule_type,
+                        "subtype": stmt.excluded.subtype,
+                        "text": stmt.excluded.text,
+                        "source_page": stmt.excluded.source_page,
+                        "source_text": stmt.excluded.source_text,
+                        "bbox": stmt.excluded.bbox,
+                        "embedding": stmt.excluded.embedding,
+                        "created_at": stmt.excluded.created_at,
+                    }
+                )
+                db.execute(stmt)
+                db.commit()
+
+            logger.info(f"Indexed {len(chunks)} chunks into PostgreSQL pgvector for policy {policy_id}")
+            return len(chunks)
+        finally:
+            db.close()
 
     @classmethod
     def get_policy_chunks(cls, policy_id: str) -> List[Dict[str, Any]]:
-        """Retrieves all indexed chunks for a specific policy_id."""
-        with get_db() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT chunk_id, policy_id, document_id, section, clause, 
-                       rule_type, subtype, text, source_page, source_text, bbox, embedding
-                FROM policy_chunks 
-                WHERE policy_id = ? 
-                ORDER BY source_page ASC, chunk_id ASC;
-            """, (policy_id,))
-            rows = cursor.fetchall()
-            
-            chunks = []
-            for r in rows:
-                c_dict = dict(r)
+        """Retrieves all indexed chunks for a specific policy_id from PostgreSQL."""
+        db = SessionLocal()
+        try:
+            stmt = (
+                select(PolicyChunk)
+                .where(PolicyChunk.policy_id == policy_id)
+                .order_by(PolicyChunk.source_page.asc(), PolicyChunk.chunk_id.asc())
+            )
+            chunks = db.scalars(stmt).all()
+            result = []
+            for c in chunks:
+                c_dict = c.to_dict()
                 if c_dict.get("bbox") and isinstance(c_dict["bbox"], str):
                     try:
                         c_dict["bbox"] = json.loads(c_dict["bbox"])
                     except Exception:
                         pass
-                if c_dict.get("embedding") and isinstance(c_dict["embedding"], str):
-                    try:
-                        c_dict["embedding"] = json.loads(c_dict["embedding"])
-                    except Exception:
-                        pass
-                chunks.append(c_dict)
-            return chunks
+                result.append(c_dict)
+            return result
+        finally:
+            db.close()
 
     @classmethod
     def search_similar_chunks(
@@ -120,34 +142,69 @@ class PolicyVectorStore:
         top_k: int = 5
     ) -> List[Dict[str, Any]]:
         """
-        Performs vector similarity search restricted exclusively to policy_id chunks.
-        Computes cosine similarity against query embedding.
+        Performs vector similarity search restricted exclusively to policy_id chunks
+        directly inside PostgreSQL using pgvector cosine distance (<=>).
+        
+        Formula: similarity_score = 1 - cosine_distance
+        ORDER BY embedding <=> query_embedding ASC LIMIT top_k
         """
-        chunks = cls.get_policy_chunks(policy_id)
-        if not chunks or not query_embedding:
+        if not policy_id or not query_embedding:
             return []
 
-        q_vec = np.array(query_embedding, dtype=np.float32)
-        q_norm = np.linalg.norm(q_vec)
-        if q_norm > 0:
-            q_vec = q_vec / q_norm
+        # Ensure query embedding is list of floats
+        q_emb = [float(x) for x in query_embedding]
 
-        scored_chunks = []
-        for chunk in chunks:
-            c_emb = chunk.get("embedding")
-            if not c_emb:
-                continue
-            
-            c_vec = np.array(c_emb, dtype=np.float32)
-            c_norm = np.linalg.norm(c_vec)
-            if c_norm > 0:
-                c_vec = c_vec / c_norm
+        db = SessionLocal()
+        try:
+            cosine_dist = PolicyChunk.embedding.cosine_distance(q_emb)
+            score_expr = (1.0 - cosine_dist).label("score")
 
-            sim_score = float(np.dot(q_vec, c_vec))
-            scored_chunk = dict(chunk)
-            scored_chunk["score"] = round(sim_score, 4)
-            scored_chunks.append(scored_chunk)
+            stmt = (
+                select(
+                    PolicyChunk.chunk_id,
+                    PolicyChunk.policy_id,
+                    PolicyChunk.document_id,
+                    PolicyChunk.section,
+                    PolicyChunk.clause,
+                    PolicyChunk.rule_type,
+                    PolicyChunk.subtype,
+                    PolicyChunk.text,
+                    PolicyChunk.source_page,
+                    PolicyChunk.source_text,
+                    PolicyChunk.bbox,
+                    score_expr
+                )
+                .where(PolicyChunk.policy_id == policy_id)
+                .where(PolicyChunk.embedding.is_not(None))
+                .order_by(cosine_dist.asc())
+                .limit(top_k)
+            )
 
-        # Sort by vector similarity score descending
-        scored_chunks.sort(key=lambda x: x["score"], reverse=True)
-        return scored_chunks[:top_k]
+            rows = db.execute(stmt).fetchall()
+            scored_chunks = []
+            for r in rows:
+                bbox_val = r.bbox
+                if bbox_val and isinstance(bbox_val, str):
+                    try:
+                        bbox_val = json.loads(bbox_val)
+                    except Exception:
+                        pass
+
+                scored_chunks.append({
+                    "chunk_id": r.chunk_id,
+                    "policy_id": r.policy_id,
+                    "document_id": r.document_id,
+                    "section": r.section,
+                    "clause": r.clause,
+                    "rule_type": r.rule_type,
+                    "subtype": r.subtype,
+                    "text": r.text,
+                    "source_page": r.source_page,
+                    "source_text": r.source_text,
+                    "bbox": bbox_val,
+                    "score": round(float(r.score), 4)
+                })
+
+            return scored_chunks
+        finally:
+            db.close()

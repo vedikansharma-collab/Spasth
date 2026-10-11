@@ -1,5 +1,6 @@
 import re
 import logging
+from decimal import Decimal
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
 
@@ -115,8 +116,8 @@ class TreatmentRuleMatcher:
 
             # 1. Sum Insured
             if rule_type == "sum_insured":
-                if matched.sum_insured is None or (isinstance(val, (int, float)) and val > (matched.sum_insured or 0)):
-                    matched.sum_insured = float(val) if isinstance(val, (int, float)) else None
+                if matched.sum_insured is None or (isinstance(val, (int, float, Decimal)) and val > (matched.sum_insured or 0)):
+                    matched.sum_insured = float(val) if isinstance(val, (int, float, Decimal)) else None
                     matched.sum_insured_rule = rule
                     matched.matched_citations.append({
                         "rule": "Sum Insured",
@@ -128,7 +129,7 @@ class TreatmentRuleMatcher:
 
             # 2. Co-Payment
             elif rule_type == "copay":
-                if isinstance(val, (int, float)):
+                if isinstance(val, (int, float, Decimal)):
                     matched.copay_percent = float(val)
                     matched.copay_rule = rule
                     matched.matched_citations.append({
@@ -143,7 +144,7 @@ class TreatmentRuleMatcher:
             elif rule_type == "sub_limit":
                 # Check if this sub-limit matches the procedure
                 is_proc_match = any(kw in rule_key or kw in source_text for kw in proc_keywords)
-                if is_proc_match and isinstance(val, (int, float)) and val > 0:
+                if is_proc_match and isinstance(val, (int, float, Decimal)) and val > 0:
                     matched.procedure_sublimit = float(val)
                     matched.sublimit_rule = rule
                     matched.matched_citations.append({
@@ -156,7 +157,7 @@ class TreatmentRuleMatcher:
 
             # 4. Deductible
             elif rule_type == "deductible":
-                if isinstance(val, (int, float)):
+                if isinstance(val, (int, float, Decimal)):
                     matched.deductible = float(val)
                     matched.deductible_rule = rule
                     matched.matched_citations.append({
@@ -170,7 +171,7 @@ class TreatmentRuleMatcher:
             # 5. Room Rent Limits & Rules
             elif rule_type == "room_rent_limit":
                 matched.room_rule = rule
-                if isinstance(val, (int, float)) and val > 0:
+                if isinstance(val, (int, float, Decimal)) and val > 0:
                     matched.room_rent_cap_daily = float(val)
                 # Check if source text mentions allowed room category
                 if "single" in source_text or "standard" in source_text:

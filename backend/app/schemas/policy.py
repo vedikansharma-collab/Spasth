@@ -19,6 +19,8 @@ class PolicyUploadResponse(BaseModel):
     extraction_status: str
     uploaded_at: datetime
     message: str
+    owner_id: Optional[str] = None
+    is_public: bool = False
 
     class Config:
         from_attributes = True
@@ -32,6 +34,8 @@ class PolicyDetailResponse(BaseModel):
     uploaded_at: datetime
     extraction_status: str
     error_message: Optional[str] = None
+    owner_id: Optional[str] = None
+    is_public: bool = False
     pages: List[PolicyPageSchema] = []
     rules: List[Dict[str, Any]] = []
 
@@ -45,6 +49,8 @@ class PolicySummaryResponse(BaseModel):
     page_count: int
     uploaded_at: datetime
     extraction_status: str
+    owner_id: Optional[str] = None
+    is_public: bool = False
 
     class Config:
         from_attributes = True

@@ -1,9 +1,11 @@
-import sqlite3
 import os
+import sqlite3
+import re
 from contextlib import contextmanager
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from app.core.config import settings
+from app.database.session import engine
 
 DB_FILE = os.path.join(settings.BASE_DIR, "fin01.db")
 
@@ -13,21 +15,106 @@ def dict_factory(cursor, row):
         d[col[0]] = row[idx]
     return d
 
+class PgCursorWrapper:
+    def __init__(self, raw_cursor):
+        self._cursor = raw_cursor
+
+    def execute(self, query: str, params: Any = None):
+        # Convert SQLite ? placeholders to %s for PostgreSQL DBAPI
+        clean_query = query
+        if params is not None and "?" in clean_query:
+            clean_query = clean_query.replace("?", "%s")
+        # Remove SQLite specific PRAGMA commands
+        if clean_query.strip().upper().startswith("PRAGMA"):
+            return self
+
+        if params:
+            # Convert list to tuple if necessary
+            if isinstance(params, list):
+                params = tuple(params)
+            self._cursor.execute(clean_query, params)
+        else:
+            self._cursor.execute(clean_query)
+        return self
+
+    def executemany(self, query: str, param_seq: Any):
+        clean_query = query
+        if "?" in clean_query:
+            clean_query = clean_query.replace("?", "%s")
+        self._cursor.executemany(clean_query, param_seq)
+        return self
+
+    def fetchone(self) -> Optional[Dict[str, Any]]:
+        row = self._cursor.fetchone()
+        if row is None:
+            return None
+        col_names = [d[0] for d in self._cursor.description]
+        return dict(zip(col_names, row))
+
+    def fetchall(self) -> List[Dict[str, Any]]:
+        rows = self._cursor.fetchall()
+        if not rows:
+            return []
+        col_names = [d[0] for d in self._cursor.description]
+        return [dict(zip(col_names, r)) for r in rows]
+
+    @property
+    def rowcount(self):
+        return self._cursor.rowcount
+
+class PgConnectionWrapper:
+    def __init__(self, raw_conn):
+        self.raw_conn = raw_conn
+
+    def cursor(self):
+        return PgCursorWrapper(self.raw_conn.cursor())
+
+    def execute(self, query: str, params: Any = None):
+        cur = self.cursor()
+        return cur.execute(query, params)
+
+    def commit(self):
+        self.raw_conn.commit()
+
+    def rollback(self):
+        self.raw_conn.rollback()
+
+    def close(self):
+        self.raw_conn.close()
+
 @contextmanager
 def get_db():
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = dict_factory
-    conn.execute("PRAGMA foreign_keys = ON;")
-    try:
-        yield conn
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
+    is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+    if is_sqlite:
+        conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = dict_factory
+        conn.execute("PRAGMA foreign_keys = ON;")
+        try:
+            yield conn
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+    else:
+        raw_conn = engine.raw_connection()
+        wrapped = PgConnectionWrapper(raw_conn)
+        try:
+            yield wrapped
+            wrapped.commit()
+        except Exception:
+            wrapped.rollback()
+            raise
+        finally:
+            wrapped.close()
 
 def init_db():
+    is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+    if not is_sqlite:
+        # Schema is managed by Alembic migrations
+        return
+
     with get_db() as conn:
         cursor = conn.cursor()
         
@@ -114,106 +201,8 @@ def init_db():
             );
         """)
 
-        # Add optional columns if migrating an older database
-        cursor.execute("PRAGMA table_info(policy_rules);")
-        rule_columns = [col["name"] for col in cursor.fetchall()]
-        if "qualifiers" not in rule_columns:
-            cursor.execute("ALTER TABLE policy_rules ADD COLUMN qualifiers TEXT;")
-        if "bbox" not in rule_columns:
-            cursor.execute("ALTER TABLE policy_rules ADD COLUMN bbox TEXT;")
-        if "additional_sources" not in rule_columns:
-            cursor.execute("ALTER TABLE policy_rules ADD COLUMN additional_sources TEXT;")
-        if "status" not in rule_columns:
-            cursor.execute("ALTER TABLE policy_rules ADD COLUMN status TEXT DEFAULT 'VERIFIED';")
-        if "formatted_value" not in rule_columns:
-            cursor.execute("ALTER TABLE policy_rules ADD COLUMN formatted_value TEXT;")
-
-        cursor.execute("PRAGMA table_info(policy_pages);")
-        page_columns = [col["name"] for col in cursor.fetchall()]
-        if "layout_data" not in page_columns:
-            cursor.execute("ALTER TABLE policy_pages ADD COLUMN layout_data TEXT;")
-
-        cursor.execute("PRAGMA table_info(treatment_costs);")
-        columns = [col["name"] for col in cursor.fetchall()]
-        if "procedure_code" not in columns:
-            cursor.execute("ALTER TABLE treatment_costs ADD COLUMN procedure_code TEXT;")
-        if "source_date" not in columns:
-            cursor.execute("ALTER TABLE treatment_costs ADD COLUMN source_date TEXT;")
-        if "notes" not in columns:
-            cursor.execute("ALTER TABLE treatment_costs ADD COLUMN notes TEXT;")
-
         # Create indices
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_policy_pages_policy_id ON policy_pages(policy_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_policy_rules_policy_id ON policy_rules(policy_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_policy_chunks_policy_id ON policy_chunks(policy_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_treatment_costs_proc_city ON treatment_costs(procedure_name, city);")
-
-        # Seed treatment costs dataset if empty or refresh synthetic benchmarks
-        cursor.execute("SELECT COUNT(*) as cnt FROM treatment_costs;")
-        count = cursor.fetchone()["cnt"]
-        if count == 0:
-            seed_treatment_costs(cursor)
-
-def seed_treatment_costs(cursor):
-    """Seed MVP benchmark treatment cost dataset supporting procedure_code, city_tier, source_date, notes, and explicit synthetic data_type."""
-    import json
-    benchmarks_path = settings.DATA_DIR / "treatment_costs" / "benchmarks.json"
-    
-    if benchmarks_path.exists():
-        try:
-            with open(benchmarks_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                for item in data:
-                    cursor.execute("""
-                        INSERT OR REPLACE INTO treatment_costs (
-                            procedure_name, procedure_code, city, city_tier, min_cost, max_cost, source, source_date, notes, data_type
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                    """, (
-                        item["procedure"],
-                        item.get("procedure_code"),
-                        item["city"],
-                        item["city_tier"],
-                        float(item["cost_min"]),
-                        float(item["cost_max"]),
-                        item["source"],
-                        item.get("source_date"),
-                        item.get("notes"),
-                        item.get("data_type", "synthetic")
-                    ))
-                return
-        except Exception as e:
-            pass
-
-    # Fallback default seed
-    sample_costs = [
-        # Appendectomy
-        ("Appendectomy", "SURG-APP-001", "Pune", "Tier-1", 75000.0, 95000.0, "State Healthcare Package Benchmark 2025", "2025-01-15", "Synthetic benchmark", "synthetic"),
-        ("Appendectomy", "SURG-APP-001", "Mumbai", "Tier-1 Metro", 110000.0, 145000.0, "State Healthcare Package Benchmark 2025", "2025-01-15", "Synthetic benchmark", "synthetic"),
-        ("Appendectomy", "SURG-APP-001", "Nagpur", "Tier-2", 55000.0, 72000.0, "State Healthcare Package Benchmark 2025", "2025-01-15", "Synthetic benchmark", "synthetic"),
-
-        # Cataract Surgery
-        ("Cataract Surgery", "OPH-CAT-002", "Pune", "Tier-1", 32000.0, 48000.0, "Ophthalmology Tariff Guidelines 2025", "2025-02-01", "Synthetic benchmark", "synthetic"),
-        ("Cataract Surgery", "OPH-CAT-002", "Mumbai", "Tier-1 Metro", 45000.0, 65000.0, "Ophthalmology Tariff Guidelines 2025", "2025-02-01", "Synthetic benchmark", "synthetic"),
-        ("Cataract Surgery", "OPH-CAT-002", "Nagpur", "Tier-2", 25000.0, 38000.0, "Ophthalmology Tariff Guidelines 2025", "2025-02-01", "Synthetic benchmark", "synthetic"),
-
-        # Knee Replacement
-        ("Knee Replacement", "ORTH-TKR-003", "Pune", "Tier-1", 180000.0, 240000.0, "Orthopedic Package Benchmarks 2025", "2025-01-20", "Synthetic benchmark", "synthetic"),
-        ("Knee Replacement", "ORTH-TKR-003", "Mumbai", "Tier-1 Metro", 260000.0, 350000.0, "Orthopedic Package Benchmarks 2025", "2025-01-20", "Synthetic benchmark", "synthetic"),
-        ("Knee Replacement", "ORTH-TKR-003", "Nagpur", "Tier-2", 140000.0, 190000.0, "Orthopedic Package Benchmarks 2025", "2025-01-20", "Synthetic benchmark", "synthetic"),
-
-        # C-Section
-        ("C-Section", "OBS-CS-004", "Pune", "Tier-1", 60000.0, 85000.0, "Maternity Care Package Cost Index 2025", "2025-01-10", "Synthetic benchmark", "synthetic"),
-        ("C-Section", "OBS-CS-004", "Mumbai", "Tier-1 Metro", 90000.0, 130000.0, "Maternity Care Package Cost Index 2025", "2025-01-10", "Synthetic benchmark", "synthetic"),
-        ("C-Section", "OBS-CS-004", "Nagpur", "Tier-2", 42000.0, 60000.0, "Maternity Care Package Cost Index 2025", "2025-01-10", "Synthetic benchmark", "synthetic"),
-
-        # Angioplasty
-        ("Angioplasty", "CARD-PTCA-005", "Pune", "Tier-1", 160000.0, 220000.0, "Cardiology Procedure Benchmarks 2025", "2025-02-15", "Synthetic benchmark", "synthetic"),
-        ("Angioplasty", "CARD-PTCA-005", "Mumbai", "Tier-1 Metro", 220000.0, 310000.0, "Cardiology Procedure Benchmarks 2025", "2025-02-15", "Synthetic benchmark", "synthetic"),
-        ("Angioplasty", "CARD-PTCA-005", "Nagpur", "Tier-2", 125000.0, 175000.0, "Cardiology Procedure Benchmarks 2025", "2025-02-15", "Synthetic benchmark", "synthetic"),
-    ]
-
-    cursor.executemany("""
-        INSERT OR REPLACE INTO treatment_costs (
-            procedure_name, procedure_code, city, city_tier, min_cost, max_cost, source, source_date, notes, data_type
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-    """, sample_costs)

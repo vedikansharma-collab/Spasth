@@ -3,6 +3,7 @@ import json
 import re
 import logging
 from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 
@@ -377,8 +378,13 @@ class CanonicalPolicyGenerator:
         target_path = Path(output_path) if output_path else settings.CANONICAL_JSON_PATH
         target_path.parent.mkdir(parents=True, exist_ok=True)
 
+        def _json_default(obj):
+            if isinstance(obj, Decimal):
+                return float(obj)
+            raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
+
         with open(target_path, "w", encoding="utf-8") as f:
-            json.dump(canonical_dict, f, indent=2, ensure_ascii=False)
+            json.dump(canonical_dict, f, indent=2, ensure_ascii=False, default=_json_default)
 
         logger.info(f"Canonical policy JSON written to {target_path}")
         return str(target_path)

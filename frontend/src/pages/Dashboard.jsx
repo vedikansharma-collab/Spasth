@@ -6,7 +6,8 @@ import PolicyAssistantView from '../components/PolicyAssistantView';
 import CostEstimatorView from '../components/CostEstimatorView';
 import PolicyDocumentView from '../components/PolicyDocumentView';
 import PolicyUpload from '../components/PolicyUpload';
-import { calculateClaim, getPolicyDetail, getPolicies } from '../services/api';
+import AuthModal from '../components/AuthModal';
+import { calculateClaim, getPolicyDetail, getPolicies, getCurrentUser, logoutUser, getStoredToken } from '../services/api';
 import { X, UploadCloud } from 'lucide-react';
 
 export default function Dashboard() {
@@ -18,6 +19,10 @@ export default function Dashboard() {
   const [estimating, setEstimating] = useState(false);
   const [lastScenario, setLastScenario] = useState(null);
 
+  // Authentication state
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   // Citation navigation targets
   const [targetDocPage, setTargetDocPage] = useState(1);
   const [targetDocCitation, setTargetDocCitation] = useState(null);
@@ -26,7 +31,7 @@ export default function Dashboard() {
   // Quick Upload Modal
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
-  // Load indexed policies on mount
+  // Load indexed policies
   const refreshPolicies = async () => {
     try {
       const list = await getPolicies();
@@ -41,6 +46,11 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    if (getStoredToken()) {
+      getCurrentUser()
+        .then((u) => setCurrentUser(u))
+        .catch(() => setCurrentUser(null));
+    }
     refreshPolicies();
   }, []);
 
@@ -139,6 +149,13 @@ export default function Dashboard() {
         onTabChange={handleTabChange}
         activePolicy={activePolicy}
         onUploadClick={() => setIsUploadModalOpen(true)}
+        currentUser={currentUser}
+        onAuthClick={() => setIsAuthModalOpen(true)}
+        onLogout={() => {
+          logoutUser();
+          setCurrentUser(null);
+          refreshPolicies();
+        }}
       />
 
       {/* 2. Main Content Area */}
@@ -227,6 +244,16 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* 5. User Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={(user) => {
+          setCurrentUser(user);
+          refreshPolicies();
+        }}
+      />
     </div>
   );
 }
